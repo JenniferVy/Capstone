@@ -1,3 +1,5 @@
+from environment import Environment
+
 ############################### Trash Sensor ###################################
 
 TRASH_SIZE = 5 # default trash size, collecting macro and above
@@ -5,9 +7,13 @@ TRASH_SENSOR_RADIUS = 10
 
 class Trash_Sensor:
   """
-
+  Senses trash 
   """
   def __init__(self, enviro = Environment()):
+    """ Trash_Sensor Class Constructor to initialize the object
+
+    params: None
+    """
     # TODO: establish trash size ranges
     self.trash_size = TRASH_SIZE
     self.sensor_radius = TRASH_SENSOR_RADIUS

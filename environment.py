@@ -4,6 +4,10 @@ ENVIRO_LENGTH = 500
 ENVIRO_WIDTH = 500
 
 class Environment:
+  """
+  Micmics trash distribution of GPGP 
+
+  """
   def __init__(self, length = ENVIRO_LENGTH, width = ENVIRO_WIDTH):
     self.areaL = length
     self.areaW = width
