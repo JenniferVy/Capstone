@@ -1,3 +1,18 @@
+import pygame
+
+from pygame.locals import (
+    RLEACCEL,
+    K_UP,
+    K_DOWN,
+    K_LEFT,
+    K_RIGHT,
+    K_ESCAPE,
+    KEYDOWN,
+    QUIT,
+)
+
+SCREEN_WIDTH = 500
+SCREEN_HEIGHT = 500
 ############################### Trash Storage ##################################
 
 MAX_LOAD = 5000 # max trash load capacity in kg
@@ -28,15 +43,15 @@ class Trash_Storage:
 ################################# Boat ########################################
 MAX_SPEED = 10 # final max boat speed in range [5,10]
 
-BOAT_LENGTH = 20 # final boat length in range [5, 20]
-BOAT_WIDTH = 6 # final boat width in range [2, 6]
-BOAT_HEIGHT = 6 # final boat height in range [2, 6]
+BOAT_LENGTH = 20 # final boat length in range [5, 20] meters
+BOAT_WIDTH = 6 # final boat width in range [2, 6] meters
+BOAT_HEIGHT = 6 # final boat height in range [2, 6] meters
 TACTICAL_DIAMETER = 5*BOAT_LENGTH # final boat tactical diameter < 5*length
 
-class Boat:
+class Boat(pygame.sprite.Sprite):
   """ Boat that will move through GPGP """
 
-  def __init__(self, tilt_degrees, start_lat = 0, start_long = 0, orientation = 90, fuel = 80, trash_stor = Trash_Storage()):
+  def __init__(self, tilt_degrees = 0, start_lat = 0, start_long = 0, orientation = 90, fuel = 80, trash_stor = Trash_Storage()):
     """ Boat Class Constructor to initialize the object
 
     params:
@@ -45,6 +60,11 @@ class Boat:
     - fuel: starting fuel levels
     - trash_stor: Trash_Storage() object part of boat
     """
+    # pygame commands for simulation
+    super(Boat, self).__init__()
+    self.surf = pygame.image.load("assets/small_trasnparent_boat.png").convert()
+    self.surf.set_colorkey((255, 255, 255), RLEACCEL)
+    self.rect = self.surf.get_rect()
 
     # boat dimensions in meters
     self.length = BOAT_LENGTH
@@ -54,7 +74,7 @@ class Boat:
 
     # boat speed
     self.max_speed = MAX_SPEED
-    self.curr_speed = 0 # operational speed  in range [2,5]
+    self.curr_speed = 0 # operational speed  in range [2,5] knots or [1.03, 2.57] m/s
 
     # coordinates
     self.start_lat = start_lat
@@ -67,6 +87,26 @@ class Boat:
     # stability
     self.stability_thresh = tilt_degrees
     self.in_oper = True
+
+  def update(self, pressed_keys):
+    if pressed_keys[K_UP]:
+        self.rect.move_ip(0, -1)
+    if pressed_keys[K_DOWN]:
+        self.rect.move_ip(0, 1)
+    if pressed_keys[K_LEFT]:
+        self.rect.move_ip(-1, 0)
+    if pressed_keys[K_RIGHT]:
+        self.rect.move_ip(1, 0)
+
+    # Keep boat on the screen
+    if self.rect.left < 0:
+        self.rect.left = 0
+    if self.rect.right > SCREEN_WIDTH:
+        self.rect.right = SCREEN_WIDTH
+    if self.rect.top <= 0:
+        self.rect.top = 0
+    if self.rect.bottom >= SCREEN_HEIGHT:
+        self.rect.bottom = SCREEN_HEIGHT
 
   def stableState(self):
     """
