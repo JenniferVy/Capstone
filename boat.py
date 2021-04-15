@@ -88,15 +88,18 @@ class Boat(pygame.sprite.Sprite):
     self.stability_thresh = tilt_degrees
     self.in_oper = True
 
+    # trash storage
+    self.trash_storage = trash_stor
+
   def update(self, pressed_keys):
     if pressed_keys[K_UP]:
-        self.rect.move_ip(0, -1)
+        self.rect.move_ip(0, -2)
     if pressed_keys[K_DOWN]:
-        self.rect.move_ip(0, 1)
+        self.rect.move_ip(0, 2)
     if pressed_keys[K_LEFT]:
-        self.rect.move_ip(-1, 0)
+        self.rect.move_ip(-21, 0)
     if pressed_keys[K_RIGHT]:
-        self.rect.move_ip(1, 0)
+        self.rect.move_ip(2, 0)
 
     # Keep boat on the screen
     if self.rect.left < 0:

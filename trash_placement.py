@@ -140,4 +140,4 @@ def main():
     plt.gca().set_aspect('equal', adjustable='box')
     plt.show()
 
-main()
+#main()
