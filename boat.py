@@ -1,4 +1,6 @@
 import pygame
+from pygame.math import Vector2
+from math import radians, sin, cos
 
 from pygame.locals import (
     RLEACCEL,
@@ -11,8 +13,8 @@ from pygame.locals import (
     QUIT,
 )
 
-SCREEN_WIDTH = 500
-SCREEN_HEIGHT = 500
+SCREEN_WIDTH = 1000
+SCREEN_HEIGHT = 1000
 ############################### Trash Storage ##################################
 
 MAX_LOAD = 5000 # max trash load capacity in kg
@@ -43,15 +45,15 @@ class Trash_Storage:
 ################################# Boat ########################################
 MAX_SPEED = 10 # final max boat speed in range [5,10]
 
-BOAT_LENGTH = 20 # final boat length in range [5, 20] meters
-BOAT_WIDTH = 6 # final boat width in range [2, 6] meters
+BOAT_LENGTH = 142 # final boat length in range [5, 20] meters -- 142px
+BOAT_WIDTH = 82 # final boat width in range [2, 6] meters -- 82px
 BOAT_HEIGHT = 6 # final boat height in range [2, 6] meters
-TACTICAL_DIAMETER = 5*BOAT_LENGTH # final boat tactical diameter < 5*length
+TACTICAL_DIAMETER = 4*BOAT_LENGTH # final boat tactical diameter < 5*length
 
 class Boat(pygame.sprite.Sprite):
   """ Boat that will move through GPGP """
 
-  def __init__(self, tilt_degrees = 0, start_lat = 0, start_long = 0, orientation = 90, fuel = 80, trash_stor = Trash_Storage()):
+  def __init__(self, tilt_degrees = 0, start_lat = SCREEN_HEIGHT/2, start_long = SCREEN_WIDTH/2, angle = 0, fuel = 80, trash_stor = Trash_Storage()):
     """ Boat Class Constructor to initialize the object
 
     params:
@@ -62,9 +64,19 @@ class Boat(pygame.sprite.Sprite):
     """
     # pygame commands for simulation
     super(Boat, self).__init__()
-    self.surf = pygame.image.load("assets/small_trasnparent_boat.png").convert()
+    self.surf = pygame.image.load("assets/sccr_boat.png").convert()
     self.surf.set_colorkey((255, 255, 255), RLEACCEL)
-    self.rect = self.surf.get_rect()
+    self.orig_surf = self.surf
+    self.rect = self.surf.get_rect(
+      center=(
+                start_lat,
+                start_long,
+            )
+    )
+    self.pos = Vector2(self.rect.center)
+    self.offset = Vector2(TACTICAL_DIAMETER/4, 0)
+    self.angle = angle
+    self.set_direction()
 
     # boat dimensions in meters
     self.length = BOAT_LENGTH
@@ -74,14 +86,15 @@ class Boat(pygame.sprite.Sprite):
 
     # boat speed
     self.max_speed = MAX_SPEED
-    self.curr_speed = 0 # operational speed  in range [2,5] knots or [1.03, 2.57] m/s
+    self.curr_speed = 2 # operational speed  in range [2,5] knots or [1.03, 2.57] m/s
+    self.rot_speed = self.curr_speed / 2
 
     # coordinates
     self.start_lat = start_lat
     self.start_long = start_long
     self.curr_lat = start_lat
     self.curr_long = start_long
-    self.orientation = orientation
+    self.pivot = [(self.rect.right - self.rect.left)/2, (self.rect.bottom - self.rect.top)/2]
     self.fuel = fuel
 
     # stability
@@ -93,13 +106,16 @@ class Boat(pygame.sprite.Sprite):
 
   def update(self, pressed_keys):
     if pressed_keys[K_UP]:
-        self.rect.move_ip(0, -2)
+        self.pos += self.direction * self.curr_speed
+        self.rect.center = self.pos
     if pressed_keys[K_DOWN]:
-        self.rect.move_ip(0, 2)
+        self.rect.center = self.pos
     if pressed_keys[K_LEFT]:
-        self.rect.move_ip(-21, 0)
+        self.angle += self.rot_speed
+        self.rotate()
     if pressed_keys[K_RIGHT]:
-        self.rect.move_ip(2, 0)
+        self.angle -= self.rot_speed
+        self.rotate()
 
     # Keep boat on the screen
     if self.rect.left < 0:
@@ -110,6 +126,13 @@ class Boat(pygame.sprite.Sprite):
         self.rect.top = 0
     if self.rect.bottom >= SCREEN_HEIGHT:
         self.rect.bottom = SCREEN_HEIGHT
+  
+  def rotate(self):
+    """Rotate the image of the sprite around a pivot point."""
+    self.surf = pygame.transform.rotate(self.orig_surf, self.angle)
+    self.rect = self.surf.get_rect()
+    self.rect.center = self.pos
+    self.set_direction()
 
   def stableState(self):
     """
@@ -132,5 +155,7 @@ class Boat(pygame.sprite.Sprite):
     """
     return True
 
-    
+  def set_direction(self):
+    rad = radians(self.angle)
+    self.direction = pygame.Vector2(sin(rad), cos(rad))
   

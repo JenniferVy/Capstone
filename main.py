@@ -1,6 +1,6 @@
 from boat import Boat
 from trash_sensor import *
-from controls import *
+# from controls import *
 
 import pygame
 
@@ -21,8 +21,8 @@ myfont = pygame.font.SysFont("monospace", 16)
 clock = pygame.time.Clock()
 
 # Set up the drawing window
-SCREEN_WIDTH = 500
-SCREEN_HEIGHT = 500
+SCREEN_WIDTH = 1000
+SCREEN_HEIGHT = 1000
 
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 
@@ -30,7 +30,7 @@ ADD_TRASH = pygame.USEREVENT + 1
 pygame.time.set_timer(ADD_TRASH, 250)
 
 boat = Boat()
-controller = Controls(boat)
+# controller = Controls(boat)
 
 trash_pieces = pygame.sprite.Group()
 all_comp = pygame.sprite.Group()

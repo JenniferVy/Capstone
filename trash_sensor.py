@@ -3,8 +3,8 @@ from trash_placement import *
 import pygame
 
 ################################### Trash ######################################
-SCREEN_WIDTH = 500
-SCREEN_HEIGHT = 500
+SCREEN_WIDTH = 1000
+SCREEN_HEIGHT = 1000
 
 class Trash(pygame.sprite.Sprite):
   def __init__(self):
@@ -35,7 +35,6 @@ class Trash_Sensor:
   """
   def __init__(self, enviro = Environment()):
     """ Trash_Sensor Class Constructor to initialize the object
-
     params: None
     """
     # TODO: establish trash size ranges
@@ -45,7 +44,6 @@ class Trash_Sensor:
   def detectTrash(self):
     """
     Detects trash of trash_size within radius of sensor_radius
-
     params: None
     returns: latitude and longitude of closest trash surpassing trash size in radius
     rtype: [float, float]

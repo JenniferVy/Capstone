@@ -8,7 +8,6 @@ ENVIRO_WIDTH = 500
 class Environment:
   """
   Micmics trash distribution of GPGP 
-
   """
   def __init__(self, length = ENVIRO_LENGTH, width = ENVIRO_WIDTH):
     self.areaL = length
@@ -22,3 +21,4 @@ class Environment:
   def plotTrashGrid(self):
     # TODO: visualize grid of trash
     return []
+
