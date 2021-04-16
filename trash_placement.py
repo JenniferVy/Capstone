@@ -31,7 +31,7 @@ size_ranges = {
     SizeClass.MICRO: (0.05, 0.5),
     SizeClass.MESO: (0.5, 5),
     SizeClass.MACRO: (5, 50),
-    SizeClass.MEGA: (50, 100) # assume >50cm category goes up to 100cm (subject to change, some are probably bigger)
+    SizeClass.MEGA: (50, 2000) # assume >50cm category goes up to 2m (Subject to change. Some are bigger, but not sure how many.)
 }
 
 size_class_names = {
@@ -90,15 +90,20 @@ def generate_trash(W, H, mean_scale, relevant_size_classes):
         masses[size_class] = {}
         for plastic_type in PlasticType:
             pieces[size_class][plastic_type] = []
-            mass = mean_scale * mean_plastic_concentration[size_class][plastic_type][0] * (W/1000)*(H/1000)
+            total_mass = mean_scale * mean_plastic_concentration[size_class][plastic_type][0] * (W/1000)*(H/1000)
             n_pieces = mean_scale * mean_plastic_concentration[size_class][plastic_type][1] * (W/1000)*(H/1000)
             if n_pieces > 0:
-                mass_per_piece = mass / n_pieces
+                mass_per_piece = total_mass / n_pieces
                 n_pieces = np.rint(n_pieces).astype(int)
-                masses[size_class][plastic_type] = mass_per_piece *  n_pieces
+                total_mass = mass_per_piece *  n_pieces # adjust total_mass after rounding n_pieces to the nearest whole number
+                total_cubed_sum_of_sizes = 0
                 for i in range(n_pieces):
-                    pieces[size_class][plastic_type].append(((random.uniform(0, W), random.uniform(0, H)), random.uniform(*size_ranges[size_class]))) # (position), size
-    
+                    size = random.uniform(*size_ranges[size_class])
+                    pieces[size_class][plastic_type].append(((random.uniform(0, W), random.uniform(0, H)), size)) # (position), size
+                    total_cubed_sum_of_sizes += size**3
+                for i in range(n_pieces):
+                    masses[size_class][plastic_type].append(total_mass * (pieces[size_class][plastic_type][i][1]**3)/total_cubed_sum_of_sizes) # assume mass is proportional to the cube of size
+
     return pieces, masses
 
 def main():
