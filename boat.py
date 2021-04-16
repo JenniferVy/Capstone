@@ -50,10 +50,13 @@ BOAT_WIDTH = 82 # final boat width in range [2, 6] meters -- 82px
 BOAT_HEIGHT = 6 # final boat height in range [2, 6] meters
 TACTICAL_DIAMETER = 4*BOAT_LENGTH # final boat tactical diameter < 5*length
 
+ANCH_MAX_SURV_WAVE_HEIGHT = 4
+OPER_MAX_SURV_WAVE_HEIGHT = 2
+
 class Boat(pygame.sprite.Sprite):
   """ Boat that will move through GPGP """
 
-  def __init__(self, tilt_degrees = 0, start_lat = SCREEN_HEIGHT/2, start_long = SCREEN_WIDTH/2, angle = 0, fuel = 80, trash_stor = Trash_Storage()):
+  def __init__(self, start_lat = SCREEN_HEIGHT/2, start_long = SCREEN_WIDTH/2, angle = 0, fuel = 80, trash_stor = Trash_Storage()):
     """ Boat Class Constructor to initialize the object
 
     params:
@@ -98,7 +101,9 @@ class Boat(pygame.sprite.Sprite):
     self.fuel = fuel
 
     # stability
-    self.stability_thresh = tilt_degrees
+    self.oper_surv_wave_height = OPER_MAX_SURV_WAVE_HEIGHT
+    self.anch_surv_wave_height = ANCH_MAX_SURV_WAVE_HEIGHT
+    #self.stability_thresh = tilt_degrees
     self.in_oper = True
 
     # trash storage
@@ -153,7 +158,8 @@ class Boat(pygame.sprite.Sprite):
     returns: updated operation state of boat
     rtype: bool
     """
-    return True
+    self.in_oper = state
+    return self.in_oper
 
   def set_direction(self):
     rad = radians(self.angle)

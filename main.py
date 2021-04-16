@@ -1,6 +1,6 @@
 from boat import Boat
 from trash_sensor import *
-# from controls import *
+from environment import *
 
 import pygame
 
@@ -26,13 +26,17 @@ SCREEN_HEIGHT = 1000
 
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 
-ADD_TRASH = pygame.USEREVENT + 1
-pygame.time.set_timer(ADD_TRASH, 250)
+# ADD_TRASH = pygame.USEREVENT + 1
+# pygame.time.set_timer(ADD_TRASH, 250)
+
+ADD_WAVE = pygame.USEREVENT + 1
+pygame.time.set_timer(ADD_WAVE, 1000)
 
 boat = Boat()
 # controller = Controls(boat)
 
-trash_pieces = pygame.sprite.Group()
+waves = pygame.sprite.Group()
+#trash_pieces = pygame.sprite.Group()
 all_comp = pygame.sprite.Group()
 all_comp.add(boat)
 
@@ -53,30 +57,40 @@ while running:
             running = False
 
         # add trash
-        elif event.type == ADD_TRASH:
-            new_trash = Trash()
-            trash_pieces.add(new_trash)
-            all_comp.add(new_trash)
+        elif event.type == ADD_WAVE:
+            new_wave = Wave()
+            # trash_pieces.add(new_trash)
+            # all_comp.add(new_trash)
+            waves.add(new_wave)
+            all_comp.add(new_wave)
     
     pressed_keys = pygame.key.get_pressed()
 
     # Update the boat sprite based on user keypresses
     boat.update(pressed_keys)
-    trash_pieces.update()
+    #trash_pieces.update()
+    waves.update()
 
     # Fill the background with white
     screen.fill((173, 216, 230))
 
     # Flip the display
-    for e in all_comp:
+    for e in waves:
         screen.blit(e.surf, e.rect)
+    
+    screen.blit(boat.surf, boat.rect)
 
-    trash_collected = pygame.sprite.spritecollide(boat, trash_pieces, True)
-    for trash in trash_collected:
-        boat.trash_storage.trash_cap += 1
+    #trash_collected = pygame.sprite.spritecollide(boat, trash_pieces, True)
+    waves_hit = pygame.sprite.spritecollide(boat, waves, False)
+    for wave in waves_hit:
+        #boat.trash_storage.trash_cap += 1
+        if wave.size > boat.oper_surv_wave_height:
+            boat.setOperationState(False)
+        wave_text = myfont.render("Wave Height [m]: {0}".format(wave.size), 1, (0, 0, 0))
 
-    trash_text = myfont.render("Trash Collected [kg]: {0}".format(boat.trash_storage.trash_cap), 1, (0,0,0))
-    screen.blit(trash_text, (5, 10))
+    
+    #trash_text = myfont.render("Trash Collected [kg]: {0}".format(boat.trash_storage.trash_cap), 1, (0,0,0))
+    #screen.blit(wave_text, (5, 10))
 
     pygame.display.flip()
 
