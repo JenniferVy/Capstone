@@ -89,7 +89,7 @@ class Boat(pygame.sprite.Sprite):
 
     # boat speed
     self.max_speed = MAX_SPEED
-    self.curr_speed = 2 # operational speed  in range [2,5] knots or [1.03, 2.57] m/s
+    self.curr_speed = 6 # operational speed  in range [2,5] knots or [1.03, 2.57] m/s
     self.rot_speed = self.curr_speed / 2
 
     # coordinates
@@ -114,6 +114,7 @@ class Boat(pygame.sprite.Sprite):
         self.pos += self.direction * self.curr_speed
         self.rect.center = self.pos
     if pressed_keys[K_DOWN]:
+        self.pos -= self.direction * self.curr_speed
         self.rect.center = self.pos
     if pressed_keys[K_LEFT]:
         self.angle += self.rot_speed
@@ -141,7 +142,7 @@ class Boat(pygame.sprite.Sprite):
 
   def stableState(self):
     """
-    Periodically checks if boat is in stable state; if too much tilt, then stop operation
+    Periodically checks if boat is in stable state; if max wave height collding, then stop operation
 
     params: None
     returns: whether boat is in stable state
