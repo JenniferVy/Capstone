@@ -109,7 +109,7 @@ class Controls:
         rtype: [float, float]
         """
         
-        return []
+        return [self.lat, self.long]
     
     def getDestLoc(self):
         """

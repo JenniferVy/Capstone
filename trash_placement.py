@@ -12,6 +12,13 @@ from enum import Enum, unique
 
 # Data from https://www.nature.com/articles/s41598-018-22939-w (Table 2)
 
+"""
+For Distribution Reference: https://globaltrashsolutions.com/blog/great-pacific-garbage-patch/
+8% Microplastics
+13% Mesoplastics
+26% Macroplastics
+53% Megaplastics
+"""
 @unique
 class SizeClass(Enum):
     MICRO = 1

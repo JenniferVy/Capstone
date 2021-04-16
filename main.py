@@ -1,5 +1,6 @@
 from boat import Boat
 from trash_sensor import *
+from controls import *
 
 import pygame
 
@@ -29,6 +30,7 @@ ADD_TRASH = pygame.USEREVENT + 1
 pygame.time.set_timer(ADD_TRASH, 250)
 
 boat = Boat()
+controller = Controls(boat)
 
 trash_pieces = pygame.sprite.Group()
 all_comp = pygame.sprite.Group()
@@ -73,12 +75,12 @@ while running:
     for trash in trash_collected:
         boat.trash_storage.trash_cap += 1
 
-    trash_text = myfont.render("Trash Collected [g]: {0}".format(boat.trash_storage.trash_cap), 1, (0,0,0))
+    trash_text = myfont.render("Trash Collected [kg]: {0}".format(boat.trash_storage.trash_cap), 1, (0,0,0))
     screen.blit(trash_text, (5, 10))
 
     pygame.display.flip()
 
-    # Ensure program maintains a rate of 30 frames per second
+    # Ensure program maintains a rate of 10 frames per second
     clock.tick(10)
 
 # Done! Time to quit.
