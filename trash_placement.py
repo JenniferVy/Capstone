@@ -38,7 +38,7 @@ size_ranges = {
     SizeClass.MICRO: (0.05, 0.5),
     SizeClass.MESO: (0.5, 5),
     SizeClass.MACRO: (5, 50),
-    SizeClass.MEGA: (50, 2000) # assume >50cm category goes up to 2m (Subject to change. Some are bigger, but not sure how many.)
+    SizeClass.MEGA: (50, 2000) # assume >50cm category goes up to 2m (Subject to change. Some are bigger. Could use spreadsheet provided by The Ocean Cleanup to get accurate size distribution.)
 }
 
 size_class_names = {
@@ -94,17 +94,17 @@ mean_plastic_concentration = {
 # mass and number concentration: (kg/km^2, #/km^2)
 total_mean_plastic_concentration = (69.58, 700,886)
 
+# make total concentration = 100 kg/km^2
+default_mean_scale = 100 / total_mean_plastic_concentration[0] # how much to scale concentrations compared to the mean
+
 # L: square side length (meters)
 # mean_scale: how much to scale concentrations compared to the mean
-def generate_trash(W, H, mean_scale, relevant_size_classes):
-    masses = {}
+def generate_trash(W, H, mean_scale=default_mean_scale, relevant_size_classes=[SizeClass.MESO, SizeClass.MACRO, SizeClass.MEGA]):
     pieces = {}
     for size_class in relevant_size_classes:
         pieces[size_class] = {}
-        masses[size_class] = {}
         for plastic_type in PlasticType:
             pieces[size_class][plastic_type] = []
-            masses[size_class][plastic_type] = []
             total_mass = mean_scale * mean_plastic_concentration[size_class][plastic_type][0] * (W/1000)*(H/1000)
             n_pieces = mean_scale * mean_plastic_concentration[size_class][plastic_type][1] * (W/1000)*(H/1000)
             if n_pieces > 0:
@@ -113,26 +113,15 @@ def generate_trash(W, H, mean_scale, relevant_size_classes):
                 total_mass = mass_per_piece * n_pieces # adjust total_mass after rounding n_pieces to the nearest whole number
                 total_cubed_sum_of_sizes = 0
                 for i in range(n_pieces):
-                    size = random.uniform(*size_ranges[size_class])
-                    pieces[size_class][plastic_type].append(((random.uniform(0, W), random.uniform(0, H)), size)) # (position), size
+                    size = random.uniform(*size_ranges[size_class]) / 100 # convert from cm to m
+                    pieces[size_class][plastic_type].append([(random.uniform(0, W), random.uniform(0, H)), size, 0]) # (position), size, mass
                     total_cubed_sum_of_sizes += size**3
                 for i in range(n_pieces):
-                    masses[size_class][plastic_type].append(total_mass * (pieces[size_class][plastic_type][i][1]**3)/total_cubed_sum_of_sizes) # assume mass is proportional to the cube of size
+                    pieces[size_class][plastic_type][i][2] = total_mass * (pieces[size_class][plastic_type][i][1]**3)/total_cubed_sum_of_sizes # assume mass is proportional to the cube of size
 
-    return pieces, masses
+    return pieces
 
-def main():
-    # make total concentration = 100 kg/km^2
-    mean_scale = 100 / total_mean_plastic_concentration[0] # how much to scale concentrations compared to the mean
-
-    W = 100 # area width (meters)
-    H = 100 # area height (meters)
-    # note, there is 1 piece of megaplastic every (527m^2)/sqrt(mean_scale)
-
-    relevant_size_classes = [SizeClass.MESO, SizeClass.MACRO, SizeClass.MEGA]
-
-    pieces, masses = generate_trash(W, H, mean_scale, relevant_size_classes)
-
+def plot_trash(W, H, pieces):
     fig, ax = plt.subplots()
     plt.xlim([0, W])
     plt.ylim([0, H])
@@ -151,14 +140,27 @@ def main():
         for plastic_type in pieces[size_class]:
             print("Number of {} of type {}: {}".format(size_class_names[size_class], plastic_type_names[plastic_type], len(pieces[size_class][plastic_type])))
             for piece in pieces[size_class][plastic_type]:
-                outline_circle = plt.Circle(piece[0], piece[1]/2/100 + radius_buffer, clip_on=False, color=size_class_colors[size_class])
-                piece_circle = plt.Circle(piece[0], piece[1]/2/100, clip_on=False, color='black')
+                outline_circle = plt.Circle(piece[0], piece[1]/2 + radius_buffer, clip_on=False, color=size_class_colors[size_class])
+                piece_circle = plt.Circle(piece[0], piece[1]/2, clip_on=False, color='black')
                 ax.add_patch(outline_circle)
                 ax.add_patch(piece_circle)
-                # plt.scatter(np.array(pieces[size_class][plastic_type][0])[:,0], np.array(pieces[size_class][plastic_type][0])[:,1], np.pi * (np.array(pieces[size_class][plastic_type][1])/100)**2, c=None, linewidths=None, edgecolors=None)
+                # plt.scatter(np.array(pieces[size_class][plastic_type][0])[:,0], np.array(pieces[size_class][plastic_type][0])[:,1], np.pi * (np.array(pieces[size_class][plastic_type][1]))**2, c=None, linewidths=None, edgecolors=None)
     
     plt.gca().set_aspect('equal', adjustable='box')
     plt.show()
 
+
+def main():
+    W = 100 # area width (meters)
+    H = 100 # area height (meters)
+    # note, there is 1 piece of megaplastic every (527m^2)/sqrt(mean_scale)
+
+    mean_scale = default_mean_scale
+
+    relevant_size_classes = [SizeClass.MESO, SizeClass.MACRO, SizeClass.MEGA]
+
+    pieces, masses = generate_trash(W, H, mean_scale, relevant_size_classes)
+    plot_trash(W, H, pieces)
+    
 if __name__ == "__main__":
     main()

@@ -1,6 +1,7 @@
-from trash_placement import *
+import trash_placement
 import pygame
 import random
+import numpy as np
 
 from pygame.locals import (
     RLEACCEL,
@@ -66,15 +67,17 @@ class Environment:
   """
   Micmics trash distribution of GPGP 
   """
-  def __init__(self, length = ENVIRO_LENGTH, width = ENVIRO_WIDTH):
+  def __init__(self, length = ENVIRO_LENGTH, width = ENVIRO_WIDTH, pixels_per_meter = 10):
     self.areaL = length
     self.areaW = width
+    self.pixels_per_meter = pixels_per_meter
+    self.trash_pieces = trash_placement.generate_trash(self.areaW, self.areaL)
 
-  def generateTrashGrid(self):
-    # TODO: generate grid of trash
-    return []
-
-  def plotTrashGrid(self):
-    # TODO: visualize grid of trash
-    return []
-
+  def drawTrash(self, screen):
+    pieces = self.trash_pieces
+    for size_class in pieces:
+        for plastic_type in pieces[size_class]:
+            for piece in pieces[size_class][plastic_type]:
+                pixel_pos = np.array(piece[0]) * self.pixels_per_meter
+                pygame.draw.circle(screen, trash_placement.size_class_colors[size_class], pixel_pos, piece[1]/2 * self.pixels_per_meter + 4)
+                pygame.draw.circle(screen, "black", pixel_pos, piece[1]/2 * self.pixels_per_meter)
