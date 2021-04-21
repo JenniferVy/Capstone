@@ -58,26 +58,45 @@ class Wave(pygame.sprite.Sprite):
         if self.rect.top <= 0:
             self.kill()
 
+################################## Trash ######################################
+class Trash(pygame.sprite.Sprite):
+    def __init__(self, screen_rect, color, pos, radius):
+        super().__init__()
+        self.image = pygame.Surface(((radius+4)*2, (radius+4)*2), pygame.SRCALPHA)
+        color = pygame.Color(color)
+        color.a = 127
+        pygame.draw.circle(self.image, color, (radius+4, radius+4), radius+4)
+        pygame.draw.circle(self.image, 'black', (radius+4, radius+4), radius)
+        self.rect = self.image.get_rect(center=pos)
+        self.vel = pygame.Vector2(0, 0)
+        self.pos = pygame.Vector2(self.rect.center)
+        self.screen_rect = screen_rect
+
+    def update(self):
+        self.pos += self.vel
+        self.rect.center = self.pos
+
+        if not self.screen_rect.contains(self.rect):
+            self.kill()
+
+
 ############################### Environment ###################################
-
-ENVIRO_LENGTH = 1000
-ENVIRO_WIDTH = 1000
-
 class Environment:
   """
   Micmics trash distribution of GPGP 
   """
-  def __init__(self, length = ENVIRO_LENGTH, width = ENVIRO_WIDTH, pixels_per_meter = 10):
-    self.areaL = length
+  def __init__(self, width, length, pixels_per_meter, screen):
     self.areaW = width
+    self.areaL = length
     self.pixels_per_meter = pixels_per_meter
+    self.screen = screen
+    self.screen_rect = screen.get_rect()
     self.trash_pieces = trash_placement.generate_trash(self.areaW, self.areaL)
+    self.trash_sprites = pygame.sprite.Group()
 
-  def drawTrash(self, screen):
-    pieces = self.trash_pieces
-    for size_class in pieces:
-        for plastic_type in pieces[size_class]:
-            for piece in pieces[size_class][plastic_type]:
+    for size_class in self.trash_pieces:
+        for plastic_type in self.trash_pieces[size_class]:
+            for piece in self.trash_pieces[size_class][plastic_type]:
                 pixel_pos = np.array(piece[0]) * self.pixels_per_meter
-                pygame.draw.circle(screen, trash_placement.size_class_colors[size_class], pixel_pos, piece[1]/2 * self.pixels_per_meter + 4)
-                pygame.draw.circle(screen, "black", pixel_pos, piece[1]/2 * self.pixels_per_meter)
+                pixel_radius = piece[1]/2 * self.pixels_per_meter
+                self.trash_sprites.add(Trash(self.screen_rect, trash_placement.size_class_colors[size_class], pixel_pos, pixel_radius))

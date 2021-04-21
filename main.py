@@ -1,5 +1,4 @@
 from boat import Boat
-from trash_sensor import Trash_Sensor
 from trash_sensor import *
 from environment import *
 import math
@@ -25,6 +24,7 @@ clock = pygame.time.Clock()
 # Set up the drawing window
 SCREEN_WIDTH = 1000
 SCREEN_HEIGHT = 1000
+PIXELS_PER_METER = 10
 
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 
@@ -36,10 +36,11 @@ pygame.time.set_timer(ADD_WAVE, 1000)
 
 boat = Boat()
 # controller = Controls(boat)
-sensor = Trash_Sensor()
+environment = Environment(SCREEN_WIDTH, SCREEN_HEIGHT, PIXELS_PER_METER, screen)
+sensor = Trash_Sensor(environment)
 
 waves = pygame.sprite.Group()
-#trash_pieces = pygame.sprite.Group()
+trash = pygame.sprite.Group()
 all_comp = pygame.sprite.Group()
 all_comp.add(boat)
 
@@ -71,7 +72,9 @@ while running:
 
     # Update the boat sprite based on user keypresses
     boat.update(pressed_keys)
-    #trash_pieces.update()
+
+    environment.trash_sprites.update()
+    sensor.update(boat.pos.x, boat.pos.y, math.radians(boat.angle))
     waves.update()
 
     # Fill the background with white
@@ -81,8 +84,8 @@ while running:
     for e in waves:
         screen.blit(e.surf, e.rect)
 
-    sensor.detectTrash(boat.pos.x, boat.pos.y, math.radians(boat.angle))
-    sensor.drawTrash(screen)
+    environment.trash_sprites.draw(screen)
+    sensor.draw(screen)
     
     screen.blit(boat.surf, boat.rect)
 
