@@ -110,8 +110,9 @@ class Trash_Sensor:
                             else:
                                 del old_sprites[(size_class,plastic_type,i)]
 
-    for piece in old_sprites:
-        old_sprites[piece].kill()
+    for piece_key in old_sprites:
+        old_sprites[piece_key].kill()
+        del self.detected_trash_sprite_lookup[piece_key]
 
     self.detected_trash_sprites.update()
 
