@@ -28,11 +28,11 @@ PIXELS_PER_METER = 10
 
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 
-# ADD_TRASH = pygame.USEREVENT + 1
-# pygame.time.set_timer(ADD_TRASH, 250)
-
 ADD_WAVE = pygame.USEREVENT + 1
 pygame.time.set_timer(ADD_WAVE, 1000)
+
+ADD_TRASH = pygame.USEREVENT + 2
+pygame.time.set_timer(ADD_TRASH, 2000)
 
 boat = Boat()
 # controller = Controls(boat)
@@ -40,9 +40,9 @@ environment = Environment(SCREEN_WIDTH, SCREEN_HEIGHT, PIXELS_PER_METER, screen)
 sensor = Trash_Sensor(environment)
 
 waves = pygame.sprite.Group()
-trash = pygame.sprite.Group()
+trash_pieces = pygame.sprite.Group()
 all_comp = pygame.sprite.Group()
-all_comp.add(boat)
+
 
 # Run until the user asks to quit
 running = True
@@ -60,13 +60,15 @@ while running:
         elif event.type == QUIT:
             running = False
 
-        # add trash
         elif event.type == ADD_WAVE:
-            new_wave = Wave()
-            # trash_pieces.add(new_trash)
-            # all_comp.add(new_trash)
+            new_wave = Wave() 
             waves.add(new_wave)
             all_comp.add(new_wave)
+        
+        elif event.type == ADD_TRASH:
+            new_trash = Trash()
+            trash_pieces.add(new_trash)
+            all_comp.add(new_trash)
     
     pressed_keys = pygame.key.get_pressed()
 
@@ -76,12 +78,13 @@ while running:
     environment.trash_sprites.update()
     sensor.update(boat.pos.x, boat.pos.y, math.radians(boat.angle))
     waves.update()
-
-    # Fill the background with white
+    trash_pieces.update()
+    
+    # Fill the background with light blue
     screen.fill((173, 216, 230))
 
     # Flip the display
-    for e in waves:
+    for e in all_comp:
         screen.blit(e.surf, e.rect)
 
     environment.trash_sprites.draw(screen)
@@ -89,22 +92,30 @@ while running:
     
     screen.blit(boat.surf, boat.rect)
 
-    #trash_collected = pygame.sprite.spritecollide(boat, trash_pieces, True)
     waves_hit = pygame.sprite.spritecollide(boat, waves, False)
     for wave in waves_hit:
-        #boat.trash_storage.trash_cap += 1
         if wave.size > boat.oper_surv_wave_height:
             boat.setOperationState(False)
-        wave_text = myfont.render("Wave Height [m]: {0}".format(wave.size), 1, (0, 0, 0))
-
+            #wave.kill()
     
-    #trash_text = myfont.render("Trash Collected [kg]: {0}".format(boat.trash_storage.trash_cap), 1, (0,0,0))
-    #screen.blit(wave_text, (5, 10))
+    trash_collected = pygame.sprite.spritecollide(boat, trash_pieces, True)
+    for trash in trash_collected:
+        boat.trash_storage.trash_cap += trash.mass
 
+    tps, tpd = 0, 0
+    trash_text = myfont.render("Trash Collected [kg]: {trash:.2f}".format(
+        trash = boat.trash_storage.trash_cap), 1, (0,0,0))
+    tps_text = myfont.render("Trash per Time [kg/s]: {tps:.2f}".format(
+        tps = boat.trash_storage.trash_cap/(pygame.time.get_ticks()/1000.0)), 1, (0,0,0))
+    tpd_text = myfont.render("Trash per Distance Travelled [kg/m]: {tpd:.2f}".format( 
+        tpd = boat.trash_storage.trash_cap/(boat.dist_travelled/1000.0) if boat.dist_travelled != 0 else 0), 1, (0,0,0))
+    screen.blit(trash_text, (5, 10))
+    screen.blit(tps_text, (5, 25))
+    screen.blit(tpd_text, (5, 40))
     pygame.display.flip()
 
     # Ensure program maintains a rate of 10 frames per second
-    clock.tick(10)
+    clock.tick(5)
 
 # Done! Time to quit.
 pygame.quit()

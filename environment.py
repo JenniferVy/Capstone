@@ -19,24 +19,23 @@ class Wave(pygame.sprite.Sprite):
         super(Wave, self).__init__()
         
         # choose wave
-        wave_choice = random.randint(0, 5)
-        print(wave_choice)
-        if wave_choice == 0:
+        wave_choice = random.choices(list(range(0, 6, 1)), WAVE_WEIGHTS)
+        if wave_choice[0] == 0:
             self.surf = pygame.image.load("assets/wave0.png").convert()
             self.size = random.uniform(WAVE_RANGES[0][0], WAVE_RANGES[0][1])
-        elif wave_choice == 1:
+        elif wave_choice[0] == 1:
             self.surf = pygame.image.load("assets/wave1.png").convert()
             self.size = random.uniform(WAVE_RANGES[1][0], WAVE_RANGES[1][1])
-        elif wave_choice == 2:
+        elif wave_choice[0] == 2:
             self.surf = pygame.image.load("assets/wave2.png").convert()
             self.size = random.uniform(WAVE_RANGES[2][0], WAVE_RANGES[2][1])
-        elif wave_choice == 3:
+        elif wave_choice[0] == 3:
             self.surf = pygame.image.load("assets/wave3.png").convert()
             self.size = random.uniform(WAVE_RANGES[3][0], WAVE_RANGES[3][1])
-        elif wave_choice == 4:
+        elif wave_choice[0] == 4:
             self.surf = pygame.image.load("assets/wave4.png").convert()
             self.size = random.uniform(WAVE_RANGES[4][0], WAVE_RANGES[4][1])
-        elif wave_choice == 5:
+        elif wave_choice[0] == 5:
             self.surf = pygame.image.load("assets/wave5.png").convert()
             self.size = random.uniform(WAVE_RANGES[5][0], WAVE_RANGES[5][1])
         else:
@@ -46,17 +45,19 @@ class Wave(pygame.sprite.Sprite):
         self.surf.set_colorkey((255, 255, 255), RLEACCEL)
         self.rect = self.surf.get_rect(
             center=(
-                random.randint(0, SCREEN_HEIGHT),
-                random.randint(SCREEN_WIDTH + 20, SCREEN_WIDTH + 100),
+                random.randint(0, SCREEN_WIDTH),
+                random.randint(0, 10),
             )
         )
-        self.speed = 1
+        self.speed = 3
         
 
   def update(self):
-        self.rect.move_ip(0, -self.speed)
-        if self.rect.top <= 0:
-            self.kill()
+    self.rect.move_ip(-self.speed/3, +self.speed)
+    if self.rect.bottom >= SCREEN_HEIGHT:
+      self.kill()
+    if self.rect.left < 0:
+      self.kill()
 
 ################################## Trash ######################################
 class Trash(pygame.sprite.Sprite):

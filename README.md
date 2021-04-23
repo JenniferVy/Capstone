@@ -2,7 +2,6 @@
 Simulations of Trash Collecting Boat
 ## Research / Information
 ### Wave Height Frequencies and Corresponding Heights
-### Wave Height Frequencies and Corresponding Heights
 | Sea State (Beaufort Scale) | Wave Height Range (m) | Frequency in GPGP |
 | --- | --- | --- |
 | 0 | 0 | 1 |
