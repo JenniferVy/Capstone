@@ -1,0 +1,55 @@
+#VRML_SIM R2021a utf8
+WorldInfo {
+  basicTimeStep 4
+  coordinateSystem "NUE"
+}
+Viewpoint {
+  orientation -0.4061345725526513 -0.909473250064625 -0.08895569905499799 0.4726627170003537
+  position -3.588673050878118 1.0407605528311445 7.3467538758600295
+}
+TexturedBackground {
+}
+TexturedBackgroundLight {
+}
+DEF Ball_Test Solid {
+  translation 0 0.2 0
+  children [
+    DEF Ball Shape {
+      appearance Appearance {
+        material Material {
+        }
+      }
+      geometry Sphere {
+        radius 0.1
+      }
+    }
+  ]
+  immersionProperties [
+    ImmersionProperties {
+      fluidName "fluid"
+      dragForceCoefficients 0.5 0.5 0.5
+    }
+  ]
+  boundingObject USE Ball
+  physics Physics {
+    density 500
+  }
+}
+DEF WATER Fluid {
+  translation 0 -5 0
+  children [
+    DEF WATER_BOX Shape {
+      appearance PBRAppearance {
+        baseColor 0.7254901960784313 0.8705882352941177 1
+        transparency 0.7
+        roughness 0.2
+        metalness 0
+      }
+      geometry Box {
+        size 50 10 50
+      }
+    }
+  ]
+  boundingObject USE WATER_BOX
+  locked TRUE
+}
