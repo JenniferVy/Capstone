@@ -91,13 +91,20 @@ while running:
     for trash in trash_collected:
         boat.trash_storage.trash_cap += trash.mass
 
-    trash_text = myfont.render("Trash Collected [kg]: {:.{}f}".format(boat.trash_storage.trash_cap, 2), 1, (0,0,0))
+    tps, tpd = 0, 0
+    trash_text = myfont.render("Trash Collected [kg]: {trash:.2f}".format(
+        trash = boat.trash_storage.trash_cap), 1, (0,0,0))
+    tps_text = myfont.render("Trash per Time [kg/s]: {tps:.2f}".format(
+        tps = boat.trash_storage.trash_cap/(pygame.time.get_ticks()/1000.0)), 1, (0,0,0))
+    tpd_text = myfont.render("Trash per Distance Travelled [kg/m]: {tpd:.2f}".format( 
+        tpd = boat.trash_storage.trash_cap/(boat.dist_travelled/1000.0) if boat.dist_travelled != 0 else 0), 1, (0,0,0))
     screen.blit(trash_text, (5, 10))
-
+    screen.blit(tps_text, (5, 25))
+    screen.blit(tpd_text, (5, 40))
     pygame.display.flip()
 
     # Ensure program maintains a rate of 10 frames per second
-    clock.tick(10)
+    clock.tick(5)
 
 # Done! Time to quit.
 pygame.quit()

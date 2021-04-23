@@ -1,6 +1,6 @@
 import pygame
 from pygame.math import Vector2
-from math import radians, sin, cos
+from math import radians, sin, cos, sqrt
 
 from pygame.locals import (
     RLEACCEL,
@@ -109,7 +109,10 @@ class Boat(pygame.sprite.Sprite):
     # trash storage
     self.trash_storage = trash_stor
 
+    self.dist_travelled = 0
+
   def update(self, pressed_keys):
+    old_pos = self.pos
     if pressed_keys[K_UP]:
         self.pos += self.direction * self.curr_speed
         self.rect.center = self.pos
@@ -122,6 +125,7 @@ class Boat(pygame.sprite.Sprite):
     if pressed_keys[K_RIGHT]:
         self.angle -= self.rot_speed
         self.rotate()
+    self.dist_travelled += sqrt((old_pos[0] - self.pos[1])**2 + (old_pos[1] - self.pos[1])**2)
 
     # Keep boat on the screen
     if self.rect.left < 0:
@@ -165,4 +169,4 @@ class Boat(pygame.sprite.Sprite):
   def set_direction(self):
     rad = radians(self.angle)
     self.direction = pygame.Vector2(sin(rad), cos(rad))
-  
+    
