@@ -1,6 +1,8 @@
 from boat import Boat
+from trash_sensor import Trash_Sensor
 from trash_sensor import *
 from environment import *
+import math
 
 import pygame
 
@@ -33,6 +35,8 @@ ADD_TRASH = pygame.USEREVENT + 2
 pygame.time.set_timer(ADD_TRASH, 2000)
 
 boat = Boat()
+# controller = Controls(boat)
+sensor = Trash_Sensor()
 
 waves = pygame.sprite.Group()
 trash_pieces = pygame.sprite.Group()
@@ -78,6 +82,9 @@ while running:
     # Flip the display
     for e in all_comp:
         screen.blit(e.surf, e.rect)
+
+    sensor.detectTrash(boat.pos.x, boat.pos.y, math.radians(boat.angle))
+    sensor.drawTrash(screen)
     
     screen.blit(boat.surf, boat.rect)
 
@@ -108,4 +115,3 @@ while running:
 
 # Done! Time to quit.
 pygame.quit()
-
