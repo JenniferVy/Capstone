@@ -94,7 +94,7 @@ TRASH_SENSOR_FOV = math.radians(130) # radians
 TRASH_SENSOR_HORIZONTAL_RESOLUTION = 0.18 # degrees TODO: This is based on beam spacing, but actual resolution might be worse.
 
 # Assume miniumum detectable object size is related to the square of the detection distance, due to the inverse square law.
-TRASH_SENSOR_MIN_OBJECT_SIZE_OVER_SQUARE_OF_DISTANCE = 1 / 60**2 # Tyler Whitaker from Teledyne Marine estimates (based on experience) that the sonar can detect a 1m x 1m objects at 60m range.
+TRASH_SENSOR_MIN_OBJECT_SIZE_OVER_DISTANCE_4 = 1 / 60**4 # Tyler Whitaker from Teledyne Marine estimates (based on experience) that the sonar can detect a 1m x 1m objects at 60m range.
 class Trash_Sensor:
   """
   Senses trash 
@@ -137,7 +137,7 @@ class Trash_Sensor:
                 # todo distance from boat -> can detect this size and in range? -> angle w/ heading -> within FOV?
                 distance = math.sqrt((piece[0][0]-x)**2 + (piece[0][1]-y)**2)
                 if distance <= TRASH_SENSOR_RANGE:
-                    min_detectable_size = TRASH_SENSOR_MIN_OBJECT_SIZE_OVER_SQUARE_OF_DISTANCE * distance**2
+                    min_detectable_size = TRASH_SENSOR_MIN_OBJECT_SIZE_OVER_DISTANCE_4 * distance**4
                     if piece[1] >= min_detectable_size:
                         angle = math.atan2(piece[0][1]-y, piece[0][0]-x) - heading
                         while angle > math.pi:

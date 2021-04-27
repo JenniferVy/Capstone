@@ -31,8 +31,8 @@ screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 ADD_WAVE = pygame.USEREVENT + 1
 pygame.time.set_timer(ADD_WAVE, 1000)
 
-ADD_TRASH = pygame.USEREVENT + 2
-pygame.time.set_timer(ADD_TRASH, 2000)
+# ADD_TRASH = pygame.USEREVENT + 2
+# pygame.time.set_timer(ADD_TRASH, 2000)
 
 boat = Boat()
 # controller = Controls(boat)
@@ -65,10 +65,10 @@ while running:
             waves.add(new_wave)
             all_comp.add(new_wave)
         
-        elif event.type == ADD_TRASH:
-            new_trash = Trash()
-            trash_pieces.add(new_trash)
-            all_comp.add(new_trash)
+        # elif event.type == ADD_TRASH:
+        #     new_trash = Trash()
+        #     trash_pieces.add(new_trash)
+        #     all_comp.add(new_trash)
     
     pressed_keys = pygame.key.get_pressed()
 
