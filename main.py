@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from boat import Boat
 from trash_sensor import *
 from environment import *
