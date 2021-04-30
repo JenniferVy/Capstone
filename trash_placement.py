@@ -159,7 +159,7 @@ def generate_trash(W, H, boat_pos=(0,0), boat_box=(0,0), centered=False, mean_sc
             n_pieces = mean_scale * mean_plastic_concentration[size_class][plastic_type][1] * (W/1000)*(H/1000)
             if n_pieces > 0:
                 avg_mass_per_piece = total_mass / n_pieces
-                n_pieces = np.rint(n_pieces).astype(int)
+                n_pieces = np.random.choice((math.floor(n_pieces), math.ceil(n_pieces)), p=(1 - (n_pieces-math.floor(n_pieces)), 1 - (math.ceil(n_pieces)-n_pieces))).astype(int) # round with appropriate probability
                 total_mass = avg_mass_per_piece * n_pieces # adjust total_mass after rounding n_pieces to the nearest whole number
                 total_mass_proportion = 0
                 for i in range(n_pieces):

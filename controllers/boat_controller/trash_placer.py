@@ -1,8 +1,14 @@
 import math
 from trash_placement import *
 
-def place_trash(root_nodes, boat_x, boat_z):
-    pieces = generate_trash(50, 50, (boat_z,boat_x), (10,15), centered=True)
+relevant_size_classes = [
+    # SizeClass.MESO,
+    SizeClass.MACRO,
+    SizeClass.MEGA
+]
+
+def place_trash(root_nodes, boat_x, boat_z, W, L):
+    pieces = generate_trash(W, L, (boat_z,boat_x), (10,15), centered=True, relevant_size_classes=relevant_size_classes)
     for i in range(len(pieces)):
         piece = pieces[i]
         # A piece of trash is modelled as a cube with a hole, with volume = a^3 - ab^2, where a is the cube side length and b is the hole side length.
@@ -120,6 +126,6 @@ def place_trash(root_nodes, boat_x, boat_z):
                 mass -1
               }}
               radarCrossSection {rcs}
-            }}""" \
-        .format(i=i, x=piece.x, y=piece.y, a=a, b=b, t=(a-b)/2, r=(a+b)/4, density=piece.density, rcs=math.pi*(piece.size/2)**2, cr=cr, cg=cg, cb=cb)
+            }}
+        """.format(i=i, x=piece.x, y=piece.y, a=a, b=b, t=(a-b)/2, r=(a+b)/4, density=piece.density, rcs=math.pi*(piece.size/2)**2, cr=cr, cg=cg, cb=cb)
         root_nodes.importMFNodeFromString(-1, trash_node_str)
