@@ -1,6 +1,8 @@
 import math
 from trash_placement import *
 
+BACKSCATTERING_CROSS_SECTION_SCALING = 0.5 # The backscattering cross-section of a piece of trash relative to a sphere with the same diameter.
+
 relevant_size_classes = [
     # SizeClass.MESO,
     SizeClass.MACRO,
@@ -15,6 +17,8 @@ def place_trash(root_nodes, boat_x, boat_z, W, L):
         V = piece.mass / piece.density
         a = piece.size
         b = math.sqrt(a**2 - V/a) # hole size, to ensure the correct size and density
+
+        backscattering_cross_section = BACKSCATTERING_CROSS_SECTION_SCALING * math.pi*(piece.size/2)**2
 
         cr, cg, cb, = (0, 0, 0)
         color_string = size_class_colors[piece.size_class]
@@ -127,5 +131,5 @@ def place_trash(root_nodes, boat_x, boat_z, W, L):
               }}
               radarCrossSection {rcs}
             }}
-        """.format(i=i, x=piece.x, y=piece.y, a=a, b=b, t=(a-b)/2, r=(a+b)/4, density=piece.density, rcs=math.pi*(piece.size/2)**2, cr=cr, cg=cg, cb=cb)
+        """.format(i=i, x=piece.x, y=piece.y, a=a, b=b, t=(a-b)/2, r=(a+b)/4, density=piece.density, rcs=backscattering_cross_section, cr=cr, cg=cg, cb=cb)
         root_nodes.importMFNodeFromString(-1, trash_node_str)

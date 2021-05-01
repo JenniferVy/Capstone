@@ -39,6 +39,14 @@ timestep = int(robot.getBasicTimeStep())
 
 sonar = robot.getDevice('sonar')
 sonar.enable(SONAR_SAMPLING_RATE)
+prop_r_motor = robot.getDevice('prop_r_motor')
+prop_r_motor.setPosition(float('+inf'))
+prop_r_motor.setVelocity(0)
+prop_l_motor = robot.getDevice('prop_l_motor')
+prop_l_motor.setPosition(float('+inf'))
+prop_l_motor.setVelocity(0)
+rudder_r_motor = robot.getDevice('rudder_r_motor')
+rudder_l_motor = robot.getDevice('rudder_l_motor')
 
 def display_sonar_targets():
     sonar_targets = sonar.getTargets()
@@ -100,7 +108,10 @@ while robot.step(timestep) != -1:
 
     # Process sensor data here.
 
-    # Enter here functions to send actuator commands, like:
-    #  motor.setPosition(10.0)
+    # rudder_r_motor.setPosition(0.785398)
+    # rudder_l_motor.setPosition(0.785398)
+
+    # prop_r_motor.setVelocity(100)
+    # prop_l_motor.setVelocity(100)
 
 # Enter here exit cleanup code.

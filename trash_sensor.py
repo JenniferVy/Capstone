@@ -92,9 +92,12 @@ class Trash(pygame.sprite.Sprite):
 TRASH_SENSOR_RANGE = 100 # meters
 TRASH_SENSOR_FOV = math.radians(130) # radians
 TRASH_SENSOR_HORIZONTAL_RESOLUTION = 0.18 # degrees TODO: This is based on beam spacing, but actual resolution might be worse.
+BACKSCATTERING_CROSS_SECTION_SCALING = 0.5 # The backscattering cross-section of a piece of trash relative to a sphere with the same diameter.
 
 # Assume miniumum detectable object size is related to the square of the detection distance, due to the inverse square law.
 TRASH_SENSOR_MIN_OBJECT_SIZE_OVER_DISTANCE_4 = 1 / 60**4 # Tyler Whitaker from Teledyne Marine estimates (based on experience) that the sonar can detect a 1m x 1m objects at 60m range.
+TRASH_SENSOR_MIN_OBJECT_SIZE_OVER_DISTANCE_4 *= BACKSCATTERING_CROSS_SECTION_SCALING # Scale assuming the above statement is for a 1m diameter sphere.
+
 class Trash_Sensor:
   """
   Senses trash 
