@@ -1,4 +1,4 @@
-import trash_placement
+from trash_placement import *
 import pygame
 import random
 import numpy as np
@@ -60,7 +60,7 @@ class Wave(pygame.sprite.Sprite):
       self.kill()
 
 ################################## Trash ######################################
-class Trash(pygame.sprite.Sprite):
+class TrashSprite(pygame.sprite.Sprite):
     def __init__(self, screen_rect, color, pos, radius):
         super().__init__()
         self.image = pygame.Surface(((radius+4)*2, (radius+4)*2), pygame.SRCALPHA)
@@ -92,12 +92,10 @@ class Environment:
     self.pixels_per_meter = pixels_per_meter
     self.screen = screen
     self.screen_rect = screen.get_rect()
-    self.trash_pieces = trash_placement.generate_trash(self.areaW, self.areaL)
+    self.trash_pieces: List[Trash] = generate_trash(self.areaW, self.areaL)
     self.trash_sprites = pygame.sprite.Group()
 
-    for size_class in self.trash_pieces:
-        for plastic_type in self.trash_pieces[size_class]:
-            for piece in self.trash_pieces[size_class][plastic_type]:
-                pixel_pos = np.array(piece[0]) * self.pixels_per_meter
-                pixel_radius = piece[1]/2 * self.pixels_per_meter
-                self.trash_sprites.add(Trash(self.screen_rect, trash_placement.size_class_colors[size_class], pixel_pos, pixel_radius))
+    for piece in self.trash_pieces:
+        pixel_pos = np.array((piece.x, piece.y)) * self.pixels_per_meter
+        pixel_radius = piece.size/2 * self.pixels_per_meter
+        self.trash_sprites.add(TrashSprite(self.screen_rect, size_class_colors[piece.size_class], pixel_pos, pixel_radius))

@@ -92,9 +92,12 @@ class Trash(pygame.sprite.Sprite):
 TRASH_SENSOR_RANGE = 100 # meters
 TRASH_SENSOR_FOV = math.radians(130) # radians
 TRASH_SENSOR_HORIZONTAL_RESOLUTION = 0.18 # degrees TODO: This is based on beam spacing, but actual resolution might be worse.
+BACKSCATTERING_CROSS_SECTION_SCALING = 0.5 # The backscattering cross-section of a piece of trash relative to a sphere with the same diameter.
 
 # Assume miniumum detectable object size is related to the square of the detection distance, due to the inverse square law.
 TRASH_SENSOR_MIN_OBJECT_SIZE_OVER_DISTANCE_4 = 1 / 60**4 # Tyler Whitaker from Teledyne Marine estimates (based on experience) that the sonar can detect a 1m x 1m objects at 60m range.
+TRASH_SENSOR_MIN_OBJECT_SIZE_OVER_DISTANCE_4 *= BACKSCATTERING_CROSS_SECTION_SCALING # Scale assuming the above statement is for a 1m diameter sphere.
+
 class Trash_Sensor:
   """
   Senses trash 
@@ -130,31 +133,29 @@ class Trash_Sensor:
     old_sprites = self.detected_trash_sprite_lookup.copy()
 
     pieces = self.enviro.trash_pieces
-    for size_class in pieces:
-        for plastic_type in pieces[size_class]:
-            for i in range(len(pieces[size_class][plastic_type])):
-                piece = pieces[size_class][plastic_type][i]
-                # todo distance from boat -> can detect this size and in range? -> angle w/ heading -> within FOV?
-                distance = math.sqrt((piece[0][0]-x)**2 + (piece[0][1]-y)**2)
-                if distance <= TRASH_SENSOR_RANGE:
-                    min_detectable_size = TRASH_SENSOR_MIN_OBJECT_SIZE_OVER_DISTANCE_4 * distance**4
-                    if piece[1] >= min_detectable_size:
-                        angle = math.atan2(piece[0][1]-y, piece[0][0]-x) - heading
-                        while angle > math.pi:
-                            angle -= 2*math.pi
-                        while angle < -math.pi:
-                            angle += 2*math.pi
-                        if abs(angle) <= TRASH_SENSOR_FOV/2:
-                            self.detected_pieces.append(piece)
+    for i in range(len(pieces)):
+        piece = pieces[i]
+        # todo distance from boat -> can detect this size and in range? -> angle w/ heading -> within FOV?
+        distance = math.sqrt((piece.x-x)**2 + (piece.y-y)**2)
+        if distance <= TRASH_SENSOR_RANGE:
+            min_detectable_size = TRASH_SENSOR_MIN_OBJECT_SIZE_OVER_DISTANCE_4 * distance**4
+            if piece.size >= min_detectable_size:
+                angle = math.atan2(piece.y-y, piece.x-x) - heading
+                while angle > math.pi:
+                    angle -= 2*math.pi
+                while angle < -math.pi:
+                    angle += 2*math.pi
+                if abs(angle) <= TRASH_SENSOR_FOV/2:
+                    self.detected_pieces.append(piece)
 
-                            if (size_class,plastic_type,i) not in self.detected_trash_sprite_lookup:
-                                pixel_pos = np.array(piece[0]) * self.enviro.pixels_per_meter
-                                pixel_radius = piece[1]/2 * self.enviro.pixels_per_meter
-                                sprite = TrashOutline(self.enviro.screen_rect, pixel_pos, pixel_radius)
-                                self.detected_trash_sprites.add(sprite)
-                                self.detected_trash_sprite_lookup[(size_class,plastic_type,i)] = sprite
-                            else:
-                                del old_sprites[(size_class,plastic_type,i)]
+                    if i not in self.detected_trash_sprite_lookup:
+                        pixel_pos = np.array((piece.x, piece.y)) * self.enviro.pixels_per_meter
+                        pixel_radius = piece.size/2 * self.enviro.pixels_per_meter
+                        sprite = TrashOutline(self.enviro.screen_rect, pixel_pos, pixel_radius)
+                        self.detected_trash_sprites.add(sprite)
+                        self.detected_trash_sprite_lookup[i] = sprite
+                    else:
+                        del old_sprites[i]
 
     for piece_key in old_sprites:
         old_sprites[piece_key].kill()
