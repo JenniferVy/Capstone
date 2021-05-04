@@ -108,10 +108,10 @@ while robot.step(timestep) != -1:
 
     # Process sensor data here.
 
-    # rudder_r_motor.setPosition(0.785398)
-    # rudder_l_motor.setPosition(0.785398)
+    # rudder_r_motor.setPosition(math.pi/2) # TODO turning one rudder does not appear to turn the boat, so we should use a hack method like changing the drag coefficients of the rudders, throttling the existing propellers to model the rudders, or adding additional propellers
+    # rudder_l_motor.setPosition(0)
 
-    # prop_r_motor.setVelocity(100)
-    # prop_l_motor.setVelocity(100)
+    prop_r_motor.setVelocity(75) # demonstrate turning the boat by throttling the propeller motors
+    prop_l_motor.setVelocity(100)
 
 # Enter here exit cleanup code.
