@@ -17,8 +17,8 @@ WorldInfo {
   ]
 }
 Viewpoint {
-  orientation -0.009471622797387632 0.9950733957767743 0.09868751379411227 2.9576548095083672
-  position 0.1714880306574204 0.5870278673607747 -2.0095885432099485
+  orientation 0.3026490600405287 0.9401371089961402 0.15667087395225765 5.280640997003845
+  position -0.5843893796426718 0.4845261999092047 0.8286844182935057
 }
 TexturedBackground {
 }
@@ -44,7 +44,7 @@ DEF TRACKED_ROBOT Robot {
       }
     }
     DEF LEFT_TRACK Track {
-      translation 0 0 -0.07
+      translation 0 0 -0.1
       scale 0.5 0.5 0.5
       children [
         DEF WHEEL1 TrackWheel {
@@ -211,7 +211,7 @@ DEF TRACKED_ROBOT Robot {
             }
           }
           Transform {
-            translation -0.05 0.03 0
+            translation -0.04 0.03 0
             children [
               Shape {
                 appearance PBRAppearance {
