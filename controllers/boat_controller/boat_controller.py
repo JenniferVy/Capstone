@@ -45,8 +45,6 @@ prop_r_motor.setVelocity(0)
 prop_l_motor = robot.getDevice('prop_l_motor')
 prop_l_motor.setPosition(float('+inf'))
 prop_l_motor.setVelocity(0)
-rudder_r_motor = robot.getDevice('rudder_r_motor')
-rudder_l_motor = robot.getDevice('rudder_l_motor')
 
 def display_sonar_targets():
     sonar_targets = sonar.getTargets()
@@ -107,9 +105,6 @@ while robot.step(timestep) != -1:
         display_sonar_targets()
 
     # Process sensor data here.
-
-    # rudder_r_motor.setPosition(math.pi/2) # TODO turning one rudder does not appear to turn the boat, so we should use a hack method like changing the drag coefficients of the rudders, throttling the existing propellers to model the rudders, or adding additional propellers
-    # rudder_l_motor.setPosition(0)
 
     prop_r_motor.setVelocity(75) # demonstrate turning the boat by throttling the propeller motors
     prop_l_motor.setVelocity(100)
