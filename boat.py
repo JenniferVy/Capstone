@@ -1,15 +1,9 @@
 import pygame
 from pygame.math import Vector2
-from math import radians, sin, cos, sqrt
+from math import radians, degrees, sin, cos, sqrt
 
 from pygame.locals import (
     RLEACCEL,
-    K_UP,
-    K_DOWN,
-    K_LEFT,
-    K_RIGHT,
-    K_ESCAPE,
-    KEYDOWN,
     QUIT,
 )
 
@@ -44,11 +38,19 @@ class Trash_Storage:
   
 ################################# Boat ########################################
 MAX_SPEED = 10 # final max boat speed in range [5,10]
+OPERATIONAL_SPEED = 6 # operational speed in range [2,5] knots or [1.03, 2.57] m/s
 
 BOAT_LENGTH = 142 # final boat length in range [5, 20] meters -- 142px
 BOAT_WIDTH = 82 # final boat width in range [2, 6] meters -- 82px
 BOAT_HEIGHT = 6 # final boat height in range [2, 6] meters
-TACTICAL_DIAMETER = 4*BOAT_LENGTH # final boat tactical diameter < 5*length
+PROPELLER_OFFSET = 2.286 # distance of propellers from center of boat (meters)
+# TACTICAL_DIAMETER = 4*BOAT_LENGTH # final boat tactical diameter < 5*length
+
+BOAT_MASS = 22085.9 # kg
+BOAT_I_VERTICAL = 264053 # moment of inertia around the vertical axis (kg*m^2)
+PROPELLER_THRUST_COEFFICIENT = 0.3435 # Newtons of thrust per (rad/s)^2 of angular speed
+SIMPLE_DRAG_FORCE_COEFFICIENT = 1000 # Newtons of drag per (m/s)^2 of speed
+SIMPLE_DRAG_TORQUE_COEFFICIENT = 200000 # Newton-meters of drag per (rad/s)^2 of angular speed
 
 ANCH_MAX_SURV_WAVE_HEIGHT = 4
 OPER_MAX_SURV_WAVE_HEIGHT = 2
@@ -56,7 +58,7 @@ OPER_MAX_SURV_WAVE_HEIGHT = 2
 class Boat(pygame.sprite.Sprite):
   """ Boat that will move through GPGP """
 
-  def __init__(self, start_lat = SCREEN_HEIGHT/2, start_long = SCREEN_WIDTH/2, angle = 0, fuel = 80, trash_stor = Trash_Storage()):
+  def __init__(self, start_lat = SCREEN_HEIGHT/2, start_long = SCREEN_WIDTH/2, angle = 0, fuel = 80, trash_stor = Trash_Storage(), pixels_per_meter = 10):
     """ Boat Class Constructor to initialize the object
 
     params:
@@ -77,20 +79,25 @@ class Boat(pygame.sprite.Sprite):
             )
     )
     self.pos = Vector2(self.rect.center)
-    self.offset = Vector2(TACTICAL_DIAMETER/4, 0)
+    # self.offset = Vector2(TACTICAL_DIAMETER/4, 0)
     self.angle = angle
     self.set_direction()
+
+    self.pixels_per_meter = pixels_per_meter
 
     # boat dimensions in meters
     self.length = BOAT_LENGTH
     self.width = BOAT_WIDTH
     self.height = BOAT_HEIGHT
-    self.tact_diam = TACTICAL_DIAMETER
+    self.l_prop_offset = -PROPELLER_OFFSET
+    self.r_prop_offset = PROPELLER_OFFSET
+    # self.tact_diam = TACTICAL_DIAMETER
 
     # boat speed
-    self.max_speed = MAX_SPEED
-    self.curr_speed = 6 # operational speed  in range [2,5] knots or [1.03, 2.57] m/s
-    self.rot_speed = self.curr_speed / 2
+    self.lin_vel = pygame.Vector2(0, 0)
+    self.ang_vel = 0
+    self.lin_acc = pygame.Vector2(0, 0)
+    self.ang_acc = 0
 
     # coordinates
     self.start_lat = start_lat
@@ -111,31 +118,47 @@ class Boat(pygame.sprite.Sprite):
 
     self.dist_travelled = 0
 
-  def update(self, pressed_keys):
-    old_pos = self.pos
-    if pressed_keys[K_UP]:
-        self.pos += self.direction * self.curr_speed
-        self.rect.center = self.pos
-    if pressed_keys[K_DOWN]:
-        self.pos -= self.direction * self.curr_speed
-        self.rect.center = self.pos
-    if pressed_keys[K_LEFT]:
-        self.angle += self.rot_speed
-        self.rotate()
-    if pressed_keys[K_RIGHT]:
-        self.angle -= self.rot_speed
-        self.rotate()
-    self.dist_travelled += sqrt((old_pos[0] - self.pos[1])**2 + (old_pos[1] - self.pos[1])**2)
+  def update(self, l_motor_speed, r_motor_speed, dt):
+    # Approximate linear and angular velocity change by multiplying motor speeds by thrust coefficient (neglect drag).
+    prev_lin_vel = self.lin_vel
+    prev_ang_vel = self.ang_vel
+    self.lin_vel += self.lin_acc * dt
+    self.ang_vel += self.ang_acc * dt
 
-    # Keep boat on the screen
-    if self.rect.left < 0:
-        self.rect.left = 0
-    if self.rect.right > SCREEN_WIDTH:
-        self.rect.right = SCREEN_WIDTH
-    if self.rect.top <= 0:
-        self.rect.top = 0
-    if self.rect.bottom >= SCREEN_HEIGHT:
-        self.rect.bottom = SCREEN_HEIGHT
+    # Use average velocity of current and previous time steps to update position
+    old_pos = self.pos
+    self.pos += self.pixels_per_meter * (prev_lin_vel + self.lin_vel) / 2 * dt
+    self.rect.center = self.pos
+    self.angle += degrees((prev_ang_vel + self.ang_vel) / 2 * dt)
+    self.rotate()
+
+    self.dist_travelled += sqrt((old_pos[0] - self.pos[1])**2 + (old_pos[1] - self.pos[1])**2) / self.pixels_per_meter
+
+    # # Keep boat on the screen
+    # if self.rect.left < 0:
+    #     self.rect.left = 0
+    # if self.rect.right > SCREEN_WIDTH:
+    #     self.rect.right = SCREEN_WIDTH
+    # if self.rect.top <= 0:
+    #     self.rect.top = 0
+    # if self.rect.bottom >= SCREEN_HEIGHT:
+    #     self.rect.bottom = SCREEN_HEIGHT
+
+    # Propeller thrust model
+    thrust_l = PROPELLER_THRUST_COEFFICIENT * abs(l_motor_speed) * l_motor_speed
+    thrust_r = PROPELLER_THRUST_COEFFICIENT * abs(r_motor_speed) * r_motor_speed
+    force_l = self.direction * thrust_l
+    force_r = self.direction * thrust_r
+    torque_l = thrust_l * self.l_prop_offset
+    torque_r = thrust_r * self.r_prop_offset
+
+    # Drag
+    drag_force = -SIMPLE_DRAG_FORCE_COEFFICIENT * self.lin_vel.magnitude() * self.lin_vel
+    drag_torque = -SIMPLE_DRAG_TORQUE_COEFFICIENT * abs(self.ang_vel) * self.ang_vel
+
+    # Acceleration is force (or torque) divided by mass (or moment of inertia)
+    self.lin_acc = (force_l + force_r + drag_force) / BOAT_MASS
+    self.ang_acc = (torque_l + torque_r + drag_torque) / BOAT_I_VERTICAL
   
   def rotate(self):
     """Rotate the image of the sprite around a pivot point."""

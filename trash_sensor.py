@@ -96,7 +96,7 @@ BACKSCATTERING_CROSS_SECTION_SCALING = 0.5 # The backscattering cross-section of
 
 # Assume miniumum detectable object size is related to the square of the detection distance, due to the inverse square law.
 TRASH_SENSOR_MIN_OBJECT_SIZE_OVER_DISTANCE_4 = 1 / 60**4 # Tyler Whitaker from Teledyne Marine estimates (based on experience) that the sonar can detect a 1m x 1m objects at 60m range.
-TRASH_SENSOR_MIN_OBJECT_SIZE_OVER_DISTANCE_4 *= BACKSCATTERING_CROSS_SECTION_SCALING # Scale assuming the above statement is for a 1m diameter sphere.
+TRASH_SENSOR_MIN_OBJECT_SIZE_OVER_DISTANCE_4 /= BACKSCATTERING_CROSS_SECTION_SCALING # Scale assuming the above statement is for a 1m diameter sphere. This scaling represents how much sound a piece of trash may reflect relative to the same size (equal diameter) sphere.
 
 class Trash_Sensor:
   """
