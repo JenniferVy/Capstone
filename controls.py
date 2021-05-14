@@ -10,7 +10,7 @@ import math
 import numpy as np
 from pid import PID
 
-WAYPOINT_THRESHOLD = 3 # (m) distance from waypoint when it is considered reached
+WAYPOINT_THRESHOLD = 7 # (m) distance from waypoint when it is considered reached
 TRASH_SIZE_THRESHOLD = 0.5 # (m) smallest trash size to go after
 TRASH_COLLECTION_TIMEOUT = 3 # (seconds) amount of time to continue forward after trash is no longer visible in sonar
 
