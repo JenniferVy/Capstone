@@ -18,6 +18,8 @@ SONAR_SOURCE_POWER = 51469 # Watts
 SONAR_RECEIVER_GAIN = 1
 SONAR_SAMPLING_RATE = 40 # Update rate is 25Hz = 40ms: http://www.teledynemarine.com/Lists/Downloads/BlueView%20M900-2250-130-Mk2%20product%20leaflet.pdf
 
+NUM_TOP_CLEATS = 7
+
 # create the Robot instance.
 supervisor = Supervisor()
 robot = supervisor
@@ -95,6 +97,37 @@ def display_sonar_targets():
 
     # print("-")
 
+top_motor = robot.getDevice('top_motor')
+top_pos = 0.00
+
+conveyor_cleats = [] 
+cleat_motors = []
+for i in range(3, NUM_TOP_CLEATS+3):
+  conveyor_cleats.append(supervisor.getFromDef('BOAT.CONVEYOR.T{:02d}_SLIDER.T{:02d}_PARAM'.format(i, i)))
+  cleat_motors.append(supervisor.getDevice('T{:02d}_motor'.format(i)))
+
+cleat_pos = [0]*NUM_TOP_CLEATS
+cleat_top_thresholds = [0.75, 1.45, 2.15, 2.85, 3.55, 4.25, 4.95]
+cleat_bot_thresholds = [-5.25+c for c in cleat_top_thresholds]
+def move_conveyor_cleats(time_step):
+  global top_pos
+  top_pos += 0.02      
+  top_motor.setPosition(top_pos)
+  # print('Function Called')
+  for m, motor in enumerate(cleat_motors):
+    motor.setPosition(cleat_pos[m])
+  # print('Position Set')
+
+  if time_step % 100 == 0:
+    # print('Cleats Updating')
+    for c, cleat in enumerate(conveyor_cleats):
+      cleat_pos[c] += 0.1
+      if cleat_pos[c] > cleat_top_thresholds[c]:
+        cleat.getField('position').setSFFloat(cleat_bot_thresholds[c])
+        cleat_pos[c] = cleat_bot_thresholds[c]
+  
+
+
 # Main loop:
 # - perform simulation steps until Webots is stopping the controller
 time = 0
@@ -104,6 +137,7 @@ while robot.step(timestep) != -1:
     if time % SONAR_SAMPLING_RATE == 0: # this assumes SONAR_SAMPLING_RATE is divisible by timestep
         display_sonar_targets()
 
+    move_conveyor_cleats(time)
     # Process sensor data here.
 
     prop_r_motor.setVelocity(75) # demonstrate turning the boat by throttling the propeller motors
