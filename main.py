@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+from sensors import Sensors
 from boat import Boat
 from trash_sensor import *
 from environment import *
@@ -23,15 +24,20 @@ pygame.init()
 myfont = pygame.font.SysFont("monospace", 16)
 
 clock = pygame.time.Clock()
-FRAMES_PER_SECOND = 10
-dt = 1 / FRAMES_PER_SECOND
+dt = 0.1
+PLAYBACK_SPEED = 100 # e.g. 2 for playback twice as fast as reality
+FRAMES_PER_SECOND = PLAYBACK_SPEED / dt
 
 # Set up the drawing window
-SCREEN_WIDTH = 1000
-SCREEN_HEIGHT = 1000
+SCREEN_WIDTH = 1280
+SCREEN_HEIGHT = 720
 PIXELS_PER_METER = 10
 
-screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+WORLD_WIDTH = 200 # meters
+WORLD_HEIGHT = 250
+
+real_screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+screen = pygame.Surface((WORLD_WIDTH*PIXELS_PER_METER, WORLD_HEIGHT*PIXELS_PER_METER), pygame.SRCALPHA)
 
 ADD_WAVE = pygame.USEREVENT + 1
 pygame.time.set_timer(ADD_WAVE, 1000)
@@ -39,21 +45,29 @@ pygame.time.set_timer(ADD_WAVE, 1000)
 # ADD_TRASH = pygame.USEREVENT + 2
 # pygame.time.set_timer(ADD_TRASH, 2000)
 
-boat = Boat(pixels_per_meter=PIXELS_PER_METER)
+gps_path = [
+    (60, 60),
+    (WORLD_WIDTH-60, 60),
+    (WORLD_WIDTH-60, WORLD_HEIGHT-60),
+    (60, WORLD_HEIGHT-60)
+]
+
+boat = Boat(pixels_per_meter=PIXELS_PER_METER, start_long=WORLD_WIDTH*PIXELS_PER_METER/2, start_lat=WORLD_HEIGHT*PIXELS_PER_METER/2)
 environment = Environment(SCREEN_WIDTH, SCREEN_HEIGHT, PIXELS_PER_METER, screen)
 sensor = Trash_Sensor(environment)
-controller = Controls(boat, sensor)
+controller = Controls(Sensors(boat, sensor, PIXELS_PER_METER), gps_path)
 
 # waves = pygame.sprite.Group()
 trash_pieces = pygame.sprite.Group()
 # all_comp = pygame.sprite.Group()
 
-class PositionTargetSprite(pygame.sprite.Sprite): # TODO move to controls.py
+class PositionTargetSprite(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
-        r = 5
+        r = 10
         self.image = pygame.Surface((r*2, r*2), pygame.SRCALPHA)
-        pygame.draw.circle(self.image, 'red', (r, r), r)
+        pygame.draw.circle(self.image, 'red', (r, r), r, width=3)
+        pygame.draw.circle(self.image, 'red', (r, r), r-6)
         self.rect = self.image.get_rect(center=(0,0))
         self.pos = pygame.Vector2(self.rect.center)
 
@@ -80,9 +94,9 @@ while running:
         elif event.type == QUIT:
             running = False
 
-        elif event.type == pygame.MOUSEBUTTONUP:
-            target_pos = pygame.mouse.get_pos()
-            pos_target_sprite.update(target_pos)
+        # elif event.type == pygame.MOUSEBUTTONUP:
+        #     target_pos = pygame.mouse.get_pos()
+        #     pos_target_sprite.update(target_pos)
 
         # elif event.type == ADD_WAVE:
         #     new_wave = Wave() 
@@ -98,12 +112,7 @@ while running:
 
     # Control the boat
     # controller.keyboardInput(pressed_keys, dt) # Motor control via user input
-    velocity_setpoint = (0, 0)
-    if target_pos is not None:
-        direction = target_pos - boat.pos
-        direction /= direction.magnitude()
-        velocity_setpoint = 1 * direction # m/s. TODO nominal velocity
-    controller.global_velocity_control(velocity_setpoint, dt)
+    boat.update(*controller.top_level_control(dt), dt)
 
     environment.trash_sprites.update()
     sensor.update(boat.pos.x, boat.pos.y, math.radians(boat.angle))
@@ -120,10 +129,15 @@ while running:
     environment.trash_sprites.draw(screen)
     sensor.draw(screen)
 
-    if target_pos is not None:
+    if controller.current_goal_index < len(controller.gps_path):
+        pos_target_sprite.update(pygame.Vector2(controller.gps_path[controller.current_goal_index]) * PIXELS_PER_METER)
         screen.blit(pos_target_sprite.image, pos_target_sprite.rect)
     
     screen.blit(boat.surf, boat.rect)
+
+    # display world contents, and center around boat
+    real_screen.fill('white')
+    real_screen.blit(screen, (SCREEN_WIDTH/2-boat.pos[0], SCREEN_HEIGHT/2-boat.pos[1]))
 
     # waves_hit = pygame.sprite.spritecollide(boat, waves, False)
     # for wave in waves_hit:
@@ -142,9 +156,9 @@ while running:
         tps = boat.trash_storage.trash_cap/(pygame.time.get_ticks()/1000.0)), 1, (0,0,0))
     tpd_text = myfont.render("Trash per Distance Travelled [kg/m]: {tpd:.2f}".format( 
         tpd = boat.trash_storage.trash_cap/(boat.dist_travelled/1000.0) if boat.dist_travelled != 0 else 0), 1, (0,0,0))
-    screen.blit(trash_text, (5, 10))
-    screen.blit(tps_text, (5, 25))
-    screen.blit(tpd_text, (5, 40))
+    real_screen.blit(trash_text, (5, 10))
+    real_screen.blit(tps_text, (5, 25))
+    real_screen.blit(tpd_text, (5, 40))
     pygame.display.flip()
 
     # Ensure program maintains a rate of x frames per second

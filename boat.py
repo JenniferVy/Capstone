@@ -1,14 +1,13 @@
 import pygame
 from pygame.math import Vector2
 from math import radians, degrees, sin, cos, sqrt
+import numpy as np
 
 from pygame.locals import (
     RLEACCEL,
     QUIT,
 )
 
-SCREEN_WIDTH = 1000
-SCREEN_HEIGHT = 1000
 ############################### Trash Storage ##################################
 
 MAX_LOAD = 5000 # max trash load capacity in kg
@@ -49,7 +48,8 @@ PROPELLER_OFFSET = 2.286 # distance of propellers from center of boat (meters)
 BOAT_MASS = 22085.9 # kg
 BOAT_I_VERTICAL = 264053 # moment of inertia around the vertical axis (kg*m^2)
 PROPELLER_THRUST_COEFFICIENT = 0.3435 # Newtons of thrust per (rad/s)^2 of angular speed
-SIMPLE_DRAG_FORCE_COEFFICIENT = 1000 # Newtons of drag per (m/s)^2 of speed
+SIMPLE_DRAG_FORCE_COEFFICIENT_FORWARD = 1000 # Newtons of drag per (m/s)^2 of speed
+SIMPLE_DRAG_FORCE_COEFFICIENT_SIDEWAYS = 5000 # Newtons of drag per (m/s)^2 of speed
 SIMPLE_DRAG_TORQUE_COEFFICIENT = 200000 # Newton-meters of drag per (rad/s)^2 of angular speed
 
 ANCH_MAX_SURV_WAVE_HEIGHT = 4
@@ -58,12 +58,12 @@ OPER_MAX_SURV_WAVE_HEIGHT = 2
 class Boat(pygame.sprite.Sprite):
   """ Boat that will move through GPGP """
 
-  def __init__(self, start_lat = SCREEN_HEIGHT/2, start_long = SCREEN_WIDTH/2, angle = 0, fuel = 80, trash_stor = Trash_Storage(), pixels_per_meter = 10):
+  def __init__(self, start_long = 0, start_lat = 0, angle = 0, fuel = 80, trash_stor = Trash_Storage(), pixels_per_meter = 10):
     """ Boat Class Constructor to initialize the object
 
     params:
-    - start_lat: starting latitude coordinate
     - start_long: starting longitude coordinate
+    - start_lat: starting latitude coordinate
     - fuel: starting fuel levels
     - trash_stor: Trash_Storage() object part of boat
     """
@@ -74,8 +74,8 @@ class Boat(pygame.sprite.Sprite):
     self.orig_surf = self.surf
     self.rect = self.surf.get_rect(
       center=(
-                start_lat,
                 start_long,
+                start_lat,
             )
     )
     self.pos = Vector2(self.rect.center)
@@ -153,7 +153,12 @@ class Boat(pygame.sprite.Sprite):
     torque_r = thrust_r * self.r_prop_offset
 
     # Drag
-    drag_force = -SIMPLE_DRAG_FORCE_COEFFICIENT * self.lin_vel.magnitude() * self.lin_vel
+    forward_vel = np.dot(self.lin_vel, self.direction)
+    sideways_vel =  np.dot(self.lin_vel, (self.direction[1], -self.direction[0]))
+    forward_drag_force = -SIMPLE_DRAG_FORCE_COEFFICIENT_FORWARD * abs(forward_vel) * forward_vel
+    sideways_drag_force = -SIMPLE_DRAG_FORCE_COEFFICIENT_SIDEWAYS * abs(sideways_vel) * sideways_vel
+
+    drag_force = forward_drag_force * self.direction + sideways_drag_force * pygame.Vector2(self.direction[1], -self.direction[0])
     drag_torque = -SIMPLE_DRAG_TORQUE_COEFFICIENT * abs(self.ang_vel) * self.ang_vel
 
     # Acceleration is force (or torque) divided by mass (or moment of inertia)
