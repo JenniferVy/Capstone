@@ -21,7 +21,7 @@ HEADING_P = 0.22 # Input: heading_err [rad]; Output: ang_vel_sp [rad/s]
 SIDEWAYS_VEL_P = 0.01 # Input: sideways_vel_err [m/s]; Output: ang_vel_sp [rad/s]
 FORWARD_VEL_PID = (200, 25, 0) # Input: forward_vel_err [m/s]; Output: motor_speed [rad/s]. TODO may need some derivative control to compensate for motor acceleration time
 FORWARD_VEL_FF = 0 # Input: forward_vel_sp^2 [(m/s)^2]; Output: motor_speed [rad/s]. TODO if integral works well enough, might not need feedforward 
-ANG_VEL_PID = (2000, 10, 0) # Input: ang_vel_err [rad/s]; Output: motor_speed [rad/s]
+ANG_VEL_PID = (2000, 50, 0) # Input: ang_vel_err [rad/s]; Output: motor_speed [rad/s]
 ANG_VEL_FF = 0 # Input: ang_vel_sp^2 [(rad/s)^2]; Output: motor_speed [rad/s]
 
 ################################# Controls #####################################
@@ -150,7 +150,17 @@ class Controls:
         return self.motor_control(l_motor_speed, r_motor_speed)
 
     def motor_control(self, l_motor_speed, r_motor_speed):
-        # Desaturate motor commands. TODO could change this to prioritize turning.
+        # Desaturate motor commands. Prioritize correct turning over correct total thrust.
+        slower_motor_speed = l_motor_speed if l_motor_speed < r_motor_speed else r_motor_speed
+        faster_motor_speed = r_motor_speed if slower_motor_speed == l_motor_speed else l_motor_speed
+
+        thrust_adjust = 0
+        if slower_motor_speed < 0:
+            thrust_adjust = max(0, min(-slower_motor_speed, MOTOR_MAX_SPEED-faster_motor_speed))
+        elif faster_motor_speed > MOTOR_MAX_SPEED:
+            thrust_adjust = min(0, max(-slower_motor_speed, MOTOR_MAX_SPEED-faster_motor_speed))
+        l_motor_speed += thrust_adjust
+        r_motor_speed += thrust_adjust
 
         if (l_motor_speed > MOTOR_MAX_SPEED):
             l_motor_speed = MOTOR_MAX_SPEED
