@@ -50,7 +50,7 @@ BOAT_I_VERTICAL = 264053 # moment of inertia around the vertical axis (kg*m^2)
 PROPELLER_THRUST_COEFFICIENT = 0.3435 # Newtons of thrust per (rad/s)^2 of angular speed
 SIMPLE_DRAG_FORCE_COEFFICIENT_FORWARD = 738.830 # Newtons of drag per (m/s)^2 of speed
 SIMPLE_DRAG_FORCE_COEFFICIENT_SIDEWAYS = 8594.36 # Newtons of drag per (m/s)^2 of speed
-SIMPLE_DRAG_TORQUE_COEFFICIENT = 245966 # Newton-meters of drag per (rad/s)^2 of angular speed
+SIMPLE_DRAG_TORQUE_COEFFICIENT = 683559 # Newton-meters of drag per (rad/s)^2 of angular speed
 
 ANCH_MAX_SURV_WAVE_HEIGHT = 4
 OPER_MAX_SURV_WAVE_HEIGHT = 2
