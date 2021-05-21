@@ -153,7 +153,7 @@ class Trash:
 # mean_scale: how much to scale concentrations compared to the mean
 def generate_trash(W, H, boat_pos=(0,0), boat_box=(0,0), centered=False, mean_scale=default_mean_scale, relevant_size_classes=[SizeClass.MESO, SizeClass.MACRO, SizeClass.MEGA]) -> List[Trash]:
     pieces: List[Trash] = [
-        Trash(x=130, y=120, size=0.75, mass=0, density=0, size_class=SizeClass.MEGA, plastic_type=PlasticType.N) # TODO temporary: hardcode megaplastic
+        # Trash(x=130, y=120, size=0.75, mass=0, density=0, size_class=SizeClass.MEGA, plastic_type=PlasticType.N) # TODO temporary: hardcode megaplastic
     ]
     for size_class in relevant_size_classes:
         for plastic_type in PlasticType:
