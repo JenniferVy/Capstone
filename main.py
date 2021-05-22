@@ -57,7 +57,7 @@ environment = Environment(SCREEN_WIDTH, SCREEN_HEIGHT, PIXELS_PER_METER, screen)
 sensor = Trash_Sensor(environment)
 controller = Controls(Sensors(boat, sensor, PIXELS_PER_METER), gps_path)
 
-# waves = pygame.sprite.Group()
+waves = pygame.sprite.Group()
 trash_pieces = pygame.sprite.Group()
 # all_comp = pygame.sprite.Group()
 
@@ -98,10 +98,10 @@ while running:
         #     target_pos = pygame.mouse.get_pos()
         #     pos_target_sprite.update(target_pos)
 
-        # elif event.type == ADD_WAVE:
-        #     new_wave = Wave() 
-        #     waves.add(new_wave)
-        #     all_comp.add(new_wave)
+        elif event.type == ADD_WAVE:
+            new_wave = Wave() 
+            waves.add(new_wave)
+            # all_comp.add(new_wave)
         
         # elif event.type == ADD_TRASH:
         #     new_trash = Trash()
@@ -116,15 +116,13 @@ while running:
 
     environment.trash_sprites.update()
     sensor.update(boat.pos.x, boat.pos.y, math.radians(boat.angle))
-    # waves.update()
-    trash_pieces.update()
+    waves.update()
     
     # Fill the background with light blue
     screen.fill((173, 216, 230))
 
-    # # Flip the display
-    # for e in all_comp:
-    #     screen.blit(e.surf, e.rect)
+    for w in waves:
+        screen.blit(w.surf, w.rect)
 
     environment.trash_sprites.draw(screen)
     sensor.draw(screen)
@@ -139,11 +137,11 @@ while running:
     real_screen.fill('white')
     real_screen.blit(screen, (SCREEN_WIDTH/2-boat.pos[0], SCREEN_HEIGHT/2-boat.pos[1]))
 
-    # waves_hit = pygame.sprite.spritecollide(boat, waves, False)
-    # for wave in waves_hit:
-    #     if wave.size > boat.oper_surv_wave_height:
-    #         boat.setOperationState(False)
-    #         #wave.kill()
+    waves_hit = pygame.sprite.spritecollide(boat, waves, False)
+    for wave in waves_hit:
+        if wave.size > boat.oper_surv_wave_height:
+            boat.setOperationState(False)
+            #wave.kill()
     
     trash_collected = pygame.sprite.spritecollide(boat, environment.trash_sprites, True) # TODO collide with front of boat
     for trash in trash_collected:

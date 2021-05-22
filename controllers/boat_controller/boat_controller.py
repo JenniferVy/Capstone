@@ -108,6 +108,13 @@ def display_sonar_targets():
 
 top_motor = robot.getDevice('top_motor')
 top_pos = 0.00
+top_motor.setPosition(float('+inf'))
+top_motor.setVelocity(1.0)
+
+mid_motor = robot.getDevice('mid_motor')
+# mid_pos = 0.00
+mid_motor.setPosition(float('+inf'))
+mid_motor.setVelocity(1.0)
 
 conveyor_cleats = [] 
 cleat_motors = []
@@ -116,28 +123,40 @@ for i in range(3, NUM_TOP_CLEATS+3):
   cleat_motors.append(supervisor.getDevice('T{:02d}_motor'.format(i)))
 
 cleat_pos = [0]*NUM_TOP_CLEATS
-cleat_top_thresholds = [0.75, 1.45, 2.15, 2.85, 3.55, 4.25, 4.95]
+cleat_top_thresholds = [0.60, 1.35, 2.05, 2.75, 3.45, 4.15, 4.85]
 cleat_bot_thresholds = [-5.25+c for c in cleat_top_thresholds]
-next_movement_step = 0
-def move_conveyor_cleats(time_ms):
-  global next_movement_step
-  global top_pos
-  top_pos += 0.02      
-  top_motor.setPosition(top_pos)
+
+for m, motor in enumerate(cleat_motors):
+    # motor.setPosition(cleat_pos[m])
+  motor.setPosition(float('+inf'))
+  motor.setVelocity(1.0)
+    
+def move_conveyor_cleats(time_step):
+  # global top_pos
+  # top_pos += 0.02      
+  # top_motor.setPosition(top_pos)
+  top_motor.setVelocity(1.0)
+  # global mid_pos
+  # mid_pos += 0.02      
+  # mid_motor.setPosition(mid_pos)
+  mid_motor.setVelocity(1.0)
+  
   # print('Function Called')
   for m, motor in enumerate(cleat_motors):
-    motor.setPosition(cleat_pos[m])
+    # motor.setPosition(cleat_pos[m])
+    motor.setVelocity(1.0)
   # print('Position Set')
 
   if time_ms >= next_movement_step:
     next_movement_step += 100
     # print('Cleats Updating')
     for c, cleat in enumerate(conveyor_cleats):
-      cleat_pos[c] += 0.1
-      if cleat_pos[c] > cleat_top_thresholds[c]:
+      # cleat_pos[c] += 0.1
+      # if cleat_pos[c] > cleat_top_thresholds[c]:
+      if cleat.getField('position').getSFFloat() > cleat_top_thresholds[c]:
         cleat.getField('position').setSFFloat(cleat_bot_thresholds[c])
-        cleat_pos[c] = cleat_bot_thresholds[c]
-
+        # cleat_pos[c] = cleat_bot_thresholds[c]
+  
 
 # Main loop:
 # - perform simulation steps until Webots is stopping the controller

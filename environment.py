@@ -74,6 +74,8 @@ class TrashSprite(pygame.sprite.Sprite):
         self.pos = pygame.Vector2(self.rect.center)
         self.screen_rect = screen_rect
 
+        self.mass = 1
+
     def update(self):
         self.pos += self.vel
         self.rect.center = self.pos
