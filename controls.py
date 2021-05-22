@@ -1,11 +1,3 @@
-from pygame.locals import (
-    K_UP,
-    K_DOWN,
-    K_LEFT,
-    K_RIGHT,
-    K_ESCAPE,
-    KEYDOWN,
-)
 import math
 import numpy as np
 from pid import PID
@@ -49,6 +41,15 @@ class Controls:
         next(self.ang_vel_pid)
 
     def keyboardInput(self, pressed_keys, dt):
+        from pygame.locals import (
+            K_UP,
+            K_DOWN,
+            K_LEFT,
+            K_RIGHT,
+            K_ESCAPE,
+            KEYDOWN,
+        )
+
         l_motor_speed = 0 # rad/s
         r_motor_speed = 0
         if pressed_keys[K_UP]:
@@ -73,6 +74,7 @@ class Controls:
             distance = math.sqrt(dx**2 + dy**2)
             if distance < WAYPOINT_THRESHOLD: # if close enough to the current goal, move on to the next one
                 self.current_goal_index += 1
+                print("Waypont {} reached!".format(self.current_goal_index))
                 if self.current_goal_index < len(self.gps_path):
                     gps_goal = self.gps_path[self.current_goal_index]
                     dx = gps_goal[0] - self.sensors.get_pos()[0]

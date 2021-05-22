@@ -145,16 +145,16 @@ while running:
     #         boat.setOperationState(False)
     #         #wave.kill()
     
-    trash_collected = pygame.sprite.spritecollide(boat, trash_pieces, True)
+    trash_collected = pygame.sprite.spritecollide(boat, environment.trash_sprites, True) # TODO collide with front of boat
     for trash in trash_collected:
         boat.trash_storage.trash_cap += trash.mass
 
     tps, tpd = 0, 0
-    trash_text = myfont.render("Trash Collected [kg]: {trash:.2f}".format(
+    trash_text = myfont.render("Trash Collected [kg]: {trash:.4f}".format(
         trash = boat.trash_storage.trash_cap), 1, (0,0,0))
-    tps_text = myfont.render("Trash per Time [kg/s]: {tps:.2f}".format(
+    tps_text = myfont.render("Trash per Time [kg/s]: {tps:.4f}".format(
         tps = boat.trash_storage.trash_cap/(pygame.time.get_ticks()/1000.0)), 1, (0,0,0))
-    tpd_text = myfont.render("Trash per Distance Travelled [kg/m]: {tpd:.2f}".format( 
+    tpd_text = myfont.render("Trash per Distance Travelled [kg/m]: {tpd:.4f}".format( 
         tpd = boat.trash_storage.trash_cap/(boat.dist_travelled/1000.0) if boat.dist_travelled != 0 else 0), 1, (0,0,0))
     real_screen.blit(trash_text, (5, 10))
     real_screen.blit(tps_text, (5, 25))

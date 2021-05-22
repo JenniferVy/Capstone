@@ -9,14 +9,23 @@ sys.path.append("../../") # Capstone folder
 
 import math
 import trash_placer
+from webots_sensors import Sensors
+from controls import Controls
 
 # You may need to import some classes of the controller module. Ex:
 #  from controller import Robot, Motor, DistanceSensor
 from controller import Supervisor
 
-SONAR_SOURCE_POWER = 51469 # Watts
-SONAR_RECEIVER_GAIN = 1
-SONAR_SAMPLING_RATE = 40 # Update rate is 25Hz = 40ms: http://www.teledynemarine.com/Lists/Downloads/BlueView%20M900-2250-130-Mk2%20product%20leaflet.pdf
+# PReconfigured waypoint path for boat
+gps_path = [
+    (35, -35),
+    (-35, -35),
+    (-35, 35),
+    (35, 35)
+]
+
+CONTROLLER_SAMPLING_PERIOD = 40
+next_controller_step = 40 # should be after all sensors have measured their first value
 
 NUM_TOP_CLEATS = 7
 
@@ -31,7 +40,7 @@ sonar_pos = sonar_node.getField("translation").getSFVec3f()
 sonar_display = supervisor.getFromDef('SONAR_DISPLAY').getField("children")
 sonar_blobs = []
 
-boat_pos = robot_node.getField("translation").getSFVec3f()
+boat_pos = robot_node.getPosition()
 area_width = 100 # m
 area_length = 100 # m
 trash_placer.place_trash(supervisor.getRoot().getField("children"), boat_pos[0], boat_pos[2], area_width, area_length)
@@ -39,8 +48,14 @@ trash_placer.place_trash(supervisor.getRoot().getField("children"), boat_pos[0],
 # get the time step of the current world.
 timestep = int(robot.getBasicTimeStep())
 
+gps = robot.getDevice('gps')
+compass = robot.getDevice('compass')
+gyro = robot.getDevice('gyro')
 sonar = robot.getDevice('sonar')
-sonar.enable(SONAR_SAMPLING_RATE)
+
+sensors = Sensors(gps, compass, gyro, sonar)
+controller = Controls(sensors, gps_path)
+
 prop_r_motor = robot.getDevice('prop_r_motor')
 prop_r_motor.setPosition(float('+inf'))
 prop_r_motor.setVelocity(0)
@@ -52,17 +67,11 @@ def display_sonar_targets():
     sonar_targets = sonar.getTargets()
     i = 0
     for target in sonar_targets:
-        received_intensity = (10**(target.received_power/10)) / 1000 # We are using received_power to hold an intensity value, but first we pretend we're convertimg from dBm to Watts (when we are really interpreting it as W/m^2)
-        backscattering_cross_section = (received_intensity * (4*math.pi)**2 * target.distance**4) / (SONAR_SOURCE_POWER * SONAR_RECEIVER_GAIN) # Based on sonar spherical propagation
-        size_est = 2 * math.sqrt(backscattering_cross_section/math.pi) # Based on backscattering cross-section for a sphere: sigma = pi*R^2
-        # print("Trash: distance: {} m, azimuth: {} rad, size: {} m".format(target.distance, target.azimuth, size_est))
-
-        # Note: The boat position and heading used here can be used for path planning if we're too lazy to add a GPS + compass.
         x_rel = target.distance * math.cos(target.azimuth) + sonar_pos[0]
         z_rel = target.distance * math.sin(target.azimuth) + sonar_pos[2]
         boat_rotation = robot_node.getField("rotation").getSFRotation()
         boat_heading = -boat_rotation[1] * boat_rotation[3] # convert from axis-angle representation
-        boat_pos = robot_node.getField("translation").getSFVec3f()
+        boat_pos = robot_node.getPosition()
         x = (math.cos(boat_heading) * x_rel - math.sin(boat_heading) * z_rel) + boat_pos[0]
         z = (math.sin(boat_heading) * x_rel + math.cos(boat_heading) * z_rel) + boat_pos[2]
 
@@ -109,7 +118,9 @@ for i in range(3, NUM_TOP_CLEATS+3):
 cleat_pos = [0]*NUM_TOP_CLEATS
 cleat_top_thresholds = [0.75, 1.45, 2.15, 2.85, 3.55, 4.25, 4.95]
 cleat_bot_thresholds = [-5.25+c for c in cleat_top_thresholds]
-def move_conveyor_cleats(time_step):
+next_movement_step = 0
+def move_conveyor_cleats(time_ms):
+  global next_movement_step
   global top_pos
   top_pos += 0.02      
   top_motor.setPosition(top_pos)
@@ -118,14 +129,14 @@ def move_conveyor_cleats(time_step):
     motor.setPosition(cleat_pos[m])
   # print('Position Set')
 
-  if time_step % 100 == 0:
+  if time_ms >= next_movement_step:
+    next_movement_step += 100
     # print('Cleats Updating')
     for c, cleat in enumerate(conveyor_cleats):
       cleat_pos[c] += 0.1
       if cleat_pos[c] > cleat_top_thresholds[c]:
         cleat.getField('position').setSFFloat(cleat_bot_thresholds[c])
         cleat_pos[c] = cleat_bot_thresholds[c]
-  
 
 
 # Main loop:
@@ -133,14 +144,15 @@ def move_conveyor_cleats(time_step):
 time = 0
 while robot.step(timestep) != -1:
     time += timestep
-    # Read the sensors:
-    if time % SONAR_SAMPLING_RATE == 0: # this assumes SONAR_SAMPLING_RATE is divisible by timestep
+    
+    if time >= next_controller_step:
+        next_controller_step += CONTROLLER_SAMPLING_PERIOD
         display_sonar_targets()
+        sensors.step()
+        l_motor_speed, r_motor_speed = controller.top_level_control(timestep/1000)
+        prop_l_motor.setVelocity(l_motor_speed)
+        prop_r_motor.setVelocity(r_motor_speed)
 
     move_conveyor_cleats(time)
-    # Process sensor data here.
-
-    prop_r_motor.setVelocity(75) # demonstrate turning the boat by throttling the propeller motors
-    prop_l_motor.setVelocity(100)
 
 # Enter here exit cleanup code.

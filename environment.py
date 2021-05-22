@@ -61,8 +61,9 @@ class Wave(pygame.sprite.Sprite):
 
 ################################## Trash ######################################
 class TrashSprite(pygame.sprite.Sprite):
-    def __init__(self, screen_rect, color, pos, radius):
+    def __init__(self, screen_rect, color, pos, radius, mass):
         super().__init__()
+        self.mass = mass
         self.image = pygame.Surface(((radius+4)*2, (radius+4)*2), pygame.SRCALPHA)
         color = pygame.Color(color)
         color.a = 127
@@ -98,4 +99,4 @@ class Environment:
     for piece in self.trash_pieces:
         pixel_pos = np.array((piece.x, piece.y)) * self.pixels_per_meter
         pixel_radius = piece.size/2 * self.pixels_per_meter
-        self.trash_sprites.add(TrashSprite(self.screen_rect, size_class_colors[piece.size_class], pixel_pos, pixel_radius))
+        self.trash_sprites.add(TrashSprite(self.screen_rect, size_class_colors[piece.size_class], pixel_pos, pixel_radius, piece.mass))
