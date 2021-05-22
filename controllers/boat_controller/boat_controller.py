@@ -16,6 +16,8 @@ from controls import Controls
 #  from controller import Robot, Motor, DistanceSensor
 from controller import Supervisor
 
+conveyor_test = False # TODO don't place other trash and make boat move forward when this is true
+
 # PReconfigured waypoint path for boat
 gps_path = [
     (35, -35),
