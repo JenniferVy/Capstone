@@ -45,7 +45,7 @@ BOAT_HEIGHT = 6 # final boat height in range [2, 6] meters
 PROPELLER_OFFSET = 2.286 # distance of propellers from center of boat (meters)
 # TACTICAL_DIAMETER = 4*BOAT_LENGTH # final boat tactical diameter < 5*length
 
-BOAT_MASS = 22085.9 # kg
+BOAT_MASS = 24124.6 # kg
 BOAT_I_VERTICAL = 264053 # moment of inertia around the vertical axis (kg*m^2)
 PROPELLER_THRUST_COEFFICIENT = 0.3435 # Newtons of thrust per (rad/s)^2 of angular speed
 SIMPLE_DRAG_FORCE_COEFFICIENT_FORWARD = 738.830 # Newtons of drag per (m/s)^2 of speed
