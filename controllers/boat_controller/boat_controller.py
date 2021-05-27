@@ -126,7 +126,7 @@ for i in range(3, NUM_TOP_CLEATS+3):
 
 cleat_pos = [0]*NUM_TOP_CLEATS
 cleat_top_thresholds = [0.60, 1.35, 2.05, 2.75, 3.45, 4.15, 4.85]
-cleat_bot_thresholds = [-5.25+c for c in cleat_top_thresholds]
+cleat_bot_thresholds = [-5.5+c for c in cleat_top_thresholds]
 
 for m, motor in enumerate(cleat_motors):
     # motor.setPosition(cleat_pos[m])
