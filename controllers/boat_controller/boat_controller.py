@@ -132,8 +132,11 @@ for m, motor in enumerate(cleat_motors):
     # motor.setPosition(cleat_pos[m])
   motor.setPosition(float('+inf'))
   motor.setVelocity(1.0)
-    
-def move_conveyor_cleats(time_step):
+
+next_movement_step = 0
+
+def move_conveyor_cleats(time_ms):
+  global next_movement_step
   # global top_pos
   # top_pos += 0.02      
   # top_motor.setPosition(top_pos)
