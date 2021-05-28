@@ -2,6 +2,8 @@ import math
 import numpy as np
 from dataclasses import dataclass
 
+SONAR_POS = (-2.28, 5.09)
+
 SONAR_SOURCE_POWER = 51469 # Watts
 SONAR_RECEIVER_GAIN = 1
 SONAR_SAMPLING_PERIOD = 40 # Update rate is 25Hz = 40ms: http://www.teledynemarine.com/Lists/Downloads/BlueView%20M900-2250-130-Mk2%20product%20leaflet.pdf
@@ -59,7 +61,8 @@ class Sensors:
         return np.dot(lin_vel, direction)
 
     def get_sideways_vel(self):
-        lin_vel = self.gps.getSpeed() * self.vel_direction
+        gps_speed = self.gps.getSpeed()
+        lin_vel = gps_speed * self.vel_direction
         direction = self.get_direction()
         return np.dot(lin_vel, (direction[1], -direction[0]))
 
@@ -67,13 +70,18 @@ class Sensors:
         return -self.gyro.getValues()[1]
 
     def get_sonar_objects(self):
-        # TODO account for off-center sonar location, or cheat and move sonar to the center
         sonar_objects = []
         for target in self.sonar.getTargets():
             received_intensity = (10**(target.received_power/10)) / 1000 # We are using received_power to hold an intensity value, but first we pretend we're convertimg from dBm to Watts (when we are really interpreting it as W/m^2)
             backscattering_cross_section = (received_intensity * (4*math.pi)**2 * target.distance**4) / (SONAR_SOURCE_POWER * SONAR_RECEIVER_GAIN) # Based on sonar spherical propagation
             size_est = 2 * math.sqrt(backscattering_cross_section/(math.pi*BACKSCATTERING_CROSS_SECTION_SCALING)) # Based on backscattering cross-section for a sphere: sigma = pi*R^2, and adjusted based on BACKSCATTERING_CROSS_SECTION_SCALING
             # print("Trash: distance: {} m, azimuth: {} rad, size: {} m".format(target.distance, target.azimuth, size_est))
-            sonar_objects.append(SonarObject(target.distance, target.azimuth, size_est))
+            
+            # convert distance and azimuth to be relative to boat center
+            target_x = SONAR_POS[0] + target.distance * -math.sin(target.azimuth)
+            target_y = SONAR_POS[1] + target.distance * math.cos(target.azimuth)
+            distance = math.sqrt(target_x**2 + target_y**2)
+            azimuth = math.atan2(-target_x, target_y)
+            sonar_objects.append(SonarObject(distance, azimuth, size_est))
         
         return sonar_objects

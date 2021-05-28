@@ -1,32 +1,38 @@
 import math
 import numpy as np
 from pid import PID
+from logger import Logger
 
-WAYPOINT_THRESHOLD = 7 # (m) distance from waypoint when it is considered reached
+BOAT_LENGTH = 10.1 # m
+
+WAYPOINT_THRESHOLD = 15 # (m) distance from waypoint when it is considered reached
 TRASH_SIZE_THRESHOLD = 0.5 # (m) smallest trash size to go after
-TRASH_COLLECTION_TIMEOUT = 3 # (seconds) amount of time to continue forward after trash is no longer visible in sonar
+MAX_TRASH_SIZE = 2.0 # (m) max trash size to go after
+AZIMUTH_PER_DISTANCE_THRESHOLD = 1.57 / 100 # (rad/m) max azimuth of trash to go after relative to distance away (because distance determines required turnin radius)
+TRASH_COLLECTION_TIMEOUT = 2 # (seconds) amount of time to continue forward after trash is expected to hit conveyor belt
 
 OPERATIONAL_SPEED = 1.5 # (m/s) operational speed in range [2,5] knots or [1.03, 2.57] m/s
 MOTOR_MAX_SPEED = 125.7 # Motors have a max speed of 1200 RPM = 125.7 rad/s
 
-HEADING_P = 0.22 # Input: heading_err [rad]; Output: ang_vel_sp [rad/s]
-SIDEWAYS_VEL_P = 0.01 # Input: sideways_vel_err [m/s]; Output: ang_vel_sp [rad/s]
-FORWARD_VEL_PID = (200, 25, 0) # Input: forward_vel_err [m/s]; Output: motor_speed [rad/s]. TODO may need some derivative control to compensate for motor acceleration time
-FORWARD_VEL_FF = 0 # Input: forward_vel_sp^2 [(m/s)^2]; Output: motor_speed [rad/s]. TODO if integral works well enough, might not need feedforward 
-ANG_VEL_PID = (2000, 50, 0) # Input: ang_vel_err [rad/s]; Output: motor_speed [rad/s]
-ANG_VEL_FF = 0 # Input: ang_vel_sp^2 [(rad/s)^2]; Output: motor_speed [rad/s]
+HEADING_P = 0.25 # Input: heading_err [rad]; Output: ang_vel_sp [rad/s]
+SIDEWAYS_VEL_P = 0.05 # Input: sideways_vel_err [m/s]; Output: ang_vel_sp [rad/s]
+FORWARD_VEL_PID = (40, 0.7, 0) # Input: forward_vel_err [m/s]; Output: motor_speed [rad/s]. TODO may need some derivative control to compensate for motor acceleration time
+FORWARD_VEL_FF = 20 # Input: forward_vel_sp^2 [(m/s)^2]; Output: motor_speed [rad/s].
+ANG_VEL_PID = (2000, 30, 0) # Input: ang_vel_err [rad/s]; Output: motor_speed [rad/s]
+ANG_VEL_FF = 1700 # Input: ang_vel_sp^2 [(rad/s)^2]; Output: motor_speed [rad/s]
 
 ################################# Controls #####################################
 
 class Controls:
     """ Manages controls and path planning of given boat """
 
-    def __init__(self, sensors, gps_path=[]):
+    def __init__(self, logger: Logger, sensors, gps_path=[]):
         """ Controls Class Constructor to initialize the object
 
         params:
         - Boat: boat object
         """
+        self.logger = logger
         self.sensors = sensors 
         self.gps_path = gps_path
         self.current_goal_index = 0
@@ -65,21 +71,26 @@ class Controls:
         return self.motor_control(l_motor_speed, r_motor_speed, dt)
 
     def top_level_control(self, dt):
+        boat_pos = self.sensors.get_pos()
+        self.logger.log_pos(boat_pos)
+
         # if there is a GPS goal to go to, determine heading
         gps_goal_heading = None
         if self.current_goal_index < len(self.gps_path):
             gps_goal = self.gps_path[self.current_goal_index]
-            dx = gps_goal[0] - self.sensors.get_pos()[0]
-            dy = gps_goal[1] - self.sensors.get_pos()[1]
+            dx = gps_goal[0] - boat_pos[0]
+            dy = gps_goal[1] - boat_pos[1]
             distance = math.sqrt(dx**2 + dy**2)
             if distance < WAYPOINT_THRESHOLD: # if close enough to the current goal, move on to the next one
                 self.current_goal_index += 1
-                print("Waypont {} reached!".format(self.current_goal_index))
+                print("Waypoint {} reached!".format(self.current_goal_index))
                 if self.current_goal_index < len(self.gps_path):
                     gps_goal = self.gps_path[self.current_goal_index]
-                    dx = gps_goal[0] - self.sensors.get_pos()[0]
-                    dy = gps_goal[1] - self.sensors.get_pos()[1]
+                    dx = gps_goal[0] - boat_pos[0]
+                    dy = gps_goal[1] - boat_pos[1]
                 else:
+                    print("Waypoint path complete!")
+                    self.logger.final_report()
                     gps_goal = None
             if gps_goal:
                 gps_goal_heading = math.atan2(dy, dx)
@@ -94,20 +105,27 @@ class Controls:
                 if pos_diff < 0.5 and size_percent_diff < 0.2: # pos_diff: [meters], size_percent_diff: [%]
                     self.trash_goal = object
                     break
+            if self.trash_goal is None:
+                trash_dist_from_front = trash_goal.distance - BOAT_LENGTH/2
+                self.trash_goal_timeout = trash_dist_from_front/OPERATIONAL_SPEED + TRASH_COLLECTION_TIMEOUT
+                print("No longer see trash!")
         else:
             for object in self.sensors.get_sonar_objects():
-                if object.size_est >= TRASH_SIZE_THRESHOLD:
-                    print("I see some trash!")
-                    self.trash_goal = object
-                    self.trash_goal_timeout = TRASH_COLLECTION_TIMEOUT
-                    break
-
+                if object.size_est <= MAX_TRASH_SIZE and object.size_est >= TRASH_SIZE_THRESHOLD and abs(object.azimuth) <= AZIMUTH_PER_DISTANCE_THRESHOLD * object.distance:
+                    if not self.trash_goal:
+                        self.trash_goal = object
+                        print("I see some trash!")
+                    elif abs(object.azimuth) < abs(self.trash_goal.azimuth): # prioritize trash that has the smallest azimuth
+                        self.trash_goal = object
+                    
         if self.trash_goal:
             goal_heading = self.sensors.get_heading() + self.trash_goal.azimuth
             v_sp = (OPERATIONAL_SPEED * math.cos(goal_heading), OPERATIONAL_SPEED * math.sin(goal_heading))
             return self.global_velocity_control(v_sp, dt)
         elif self.trash_goal_timeout > 0:
             self.trash_goal_timeout -= dt
+            if self.trash_goal_timeout <= 0:
+                print("Trash collection timeout ended, moving on.")
             return self.local_velocity_control(OPERATIONAL_SPEED, 0, dt) # move forward to ensure trash is collected
         elif gps_goal_heading is not None:
             v_sp = (OPERATIONAL_SPEED * math.cos(gps_goal_heading), OPERATIONAL_SPEED * math.sin(gps_goal_heading))
@@ -134,7 +152,7 @@ class Controls:
         while heading_err < -math.pi:
             heading_err += 2*math.pi
 
-        ang_vel_sp = HEADING_P * heading_err + SIDEWAYS_VEL_P * sideways_vel_err
+        ang_vel_sp = HEADING_P * heading_err - SIDEWAYS_VEL_P * sideways_vel_err
 
         return self.local_velocity_control(forward_vel_sp, ang_vel_sp, dt)
 

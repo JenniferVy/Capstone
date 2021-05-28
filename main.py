@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+from logger import Logger
 from sensors import Sensors
 from boat import Boat
 from trash_sensor import *
@@ -20,6 +21,13 @@ from pygame.locals import (
     QUIT,
 )
 
+gps_path = [
+    (200, 300)
+]
+
+WORLD_WIDTH = 400 # meters
+WORLD_HEIGHT = 1000
+
 pygame.init()
 myfont = pygame.font.SysFont("monospace", 16)
 
@@ -31,10 +39,7 @@ FRAMES_PER_SECOND = PLAYBACK_SPEED / dt
 # Set up the drawing window
 SCREEN_WIDTH = 1280
 SCREEN_HEIGHT = 720
-PIXELS_PER_METER = 10
-
-WORLD_WIDTH = 200 # meters
-WORLD_HEIGHT = 250
+PIXELS_PER_METER = 5
 
 real_screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 screen = pygame.Surface((WORLD_WIDTH*PIXELS_PER_METER, WORLD_HEIGHT*PIXELS_PER_METER), pygame.SRCALPHA)
@@ -45,17 +50,11 @@ pygame.time.set_timer(ADD_WAVE, 1000)
 # ADD_TRASH = pygame.USEREVENT + 2
 # pygame.time.set_timer(ADD_TRASH, 2000)
 
-gps_path = [
-    (60, 60),
-    (WORLD_WIDTH-60, 60),
-    (WORLD_WIDTH-60, WORLD_HEIGHT-60),
-    (60, WORLD_HEIGHT-60)
-]
-
-boat = Boat(pixels_per_meter=PIXELS_PER_METER, start_long=WORLD_WIDTH*PIXELS_PER_METER/2, start_lat=WORLD_HEIGHT*PIXELS_PER_METER/2)
+logger = Logger(use_qt=True)
+boat = Boat(pixels_per_meter=PIXELS_PER_METER, start_long=200*PIXELS_PER_METER, start_lat=10*PIXELS_PER_METER)
 environment = Environment(SCREEN_WIDTH, SCREEN_HEIGHT, PIXELS_PER_METER, screen)
 sensor = Trash_Sensor(environment)
-controller = Controls(Sensors(boat, sensor, PIXELS_PER_METER), gps_path)
+controller = Controls(logger, Sensors(boat, sensor, PIXELS_PER_METER), gps_path)
 
 waves = pygame.sprite.Group()
 trash_pieces = pygame.sprite.Group()
@@ -145,6 +144,8 @@ while running:
     
     trash_collected = pygame.sprite.spritecollide(boat, environment.trash_sprites, True) # TODO collide with front of boat
     for trash in trash_collected:
+        environment.kill_trash(trash)
+        print("collected trash with mass {}".format(trash.mass))
         boat.trash_storage.trash_cap += trash.mass
 
     tps, tpd = 0, 0
@@ -160,6 +161,7 @@ while running:
     pygame.display.flip()
 
     # Ensure program maintains a rate of x frames per second
+    logger.update_time(dt)
     clock.tick(FRAMES_PER_SECOND)
 
 # Done! Time to quit.

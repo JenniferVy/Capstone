@@ -151,10 +151,45 @@ class Trash:
 
 # L: square side length (meters)
 # mean_scale: how much to scale concentrations compared to the mean
-def generate_trash(W, H, boat_pos=(0,0), boat_box=(0,0), centered=False, mean_scale=default_mean_scale, relevant_size_classes=[SizeClass.MESO, SizeClass.MACRO, SizeClass.MEGA]) -> List[Trash]:
-    pieces: List[Trash] = [
-        # Trash(x=130, y=120, size=0.75, mass=0, density=0, size_class=SizeClass.MEGA, plastic_type=PlasticType.N) # TODO temporary: hardcode megaplastic
-    ]
+def generate_trash(W, H, boat_pos=(0,0), boat_box=(0,0), centered=False, mean_scale=default_mean_scale, relevant_size_classes=[SizeClass.MESO, SizeClass.MACRO, SizeClass.MEGA], use_example=False) -> List[Trash]:
+    if use_example:
+        avg_density = {
+            SizeClass.MICRO: {},
+            SizeClass.MESO: {},
+            SizeClass.MACRO: {},
+            SizeClass.MEGA: {}
+        }
+        for size_class in plastic_materials:
+            for plastic_type in plastic_materials[size_class]:
+                avg_density[size_class][plastic_type] = 0
+                for material in plastic_materials[size_class][plastic_type]:
+                    avg_density[size_class][plastic_type] += material_densities[material[0]] * material[1]
+
+        pieces: List[Trash] = [
+            Trash(x=200+00, y= 16, size=0.75, mass=0, density=0, size_class=SizeClass.MEGA, plastic_type=PlasticType.N),
+            Trash(x=200+10, y=100, size=0.75, mass=0, density=0, size_class=SizeClass.MEGA, plastic_type=PlasticType.N),
+            Trash(x=200-10, y=100, size=0.75, mass=0, density=0, size_class=SizeClass.MEGA, plastic_type=PlasticType.N),
+            Trash(x=200+15, y=130, size=1.00, mass=0, density=0, size_class=SizeClass.MEGA, plastic_type=PlasticType.N),
+            Trash(x=200-12, y=170, size=0.75, mass=0, density=0, size_class=SizeClass.MEGA, plastic_type=PlasticType.N),
+            Trash(x=200+15, y=210, size=2.50, mass=0, density=0, size_class=SizeClass.MEGA, plastic_type=PlasticType.N),
+            Trash(x=200+00, y=240, size=0.50, mass=0, density=0, size_class=SizeClass.MEGA, plastic_type=PlasticType.N)
+        ]
+
+        for piece in pieces:
+            total_mass_for_type = mean_scale * mean_plastic_concentration[piece.size_class][piece.plastic_type][0] * (W/1000)*(H/1000)
+            n_pieces_for_type = mean_scale * mean_plastic_concentration[piece.size_class][piece.plastic_type][1] * (W/1000)*(H/1000)
+            min_log_size = math.log10(size_ranges[piece.size_class][0] / 100)
+            max_log_size = math.log10(size_ranges[piece.size_class][1] / 100)
+            avg_vol_per_piece = 1/(max_log_size - min_log_size) * ((10**3)**max_log_size - (10**3)**min_log_size) / math.log10(10**3)
+            total_vol = avg_vol_per_piece * n_pieces_for_type
+            piece_vol = piece.size**3
+            piece.mass = (piece_vol / total_vol) * total_mass_for_type
+
+            piece.density = avg_density[piece.size_class][piece.plastic_type]
+        
+        return pieces
+
+    pieces: List[Trash] = []
     for size_class in relevant_size_classes:
         for plastic_type in PlasticType:
             total_mass = mean_scale * mean_plastic_concentration[size_class][plastic_type][0] * (W/1000)*(H/1000)

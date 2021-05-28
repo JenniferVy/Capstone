@@ -1,0 +1,12 @@
+#VRML_OBJ R2021a utf8
+PaperBoat {
+  translation 5.6487 0.064552 -5.41472
+  rotation 9.700164181047222e-07 0.999991431024807 0.004139791784368245 3.14159
+  immersionProperties [
+    ImmersionProperties {
+      fluidName "fluid"
+      dragForceCoefficients 0.05 0 0
+      viscousResistanceForceCoefficient 200
+    }
+  ]
+}

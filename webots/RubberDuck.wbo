@@ -1,0 +1,13 @@
+#VRML_OBJ R2021a utf8
+RubberDuck {
+  translation 5.89 0 -4.09
+  rotation 0 0 1 0.261799
+  scale 5
+  immersionProperties [
+    ImmersionProperties {
+      fluidName "fluid"
+      viscousResistanceForceCoefficient 400
+      viscousResistanceTorqueCoefficient 0.5
+    }
+  ]
+}

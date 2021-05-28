@@ -36,8 +36,6 @@ class TrashOutline(pygame.sprite.Sprite):
         self.pos += self.vel
         self.rect.center = self.pos
 
-        if not self.screen_rect.contains(self.rect):
-            self.kill()
 ################################### Trash ######################################
 SCREEN_WIDTH = 1000
 SCREEN_HEIGHT = 1000
@@ -46,44 +44,44 @@ TRASH_SIZES = [(0, 0), (0, 0), (1, 5), (5, 10)]
 TRASH_MASS = [(0.00, 0.23), (0.00, 0.36), (0.02, 1.55), (0.35, 4.28)]
 TRASH_WEIGHTS = [8, 13, 26, 53]
 
-class Trash(pygame.sprite.Sprite):
-  def __init__(self):
-    super(Trash, self).__init__()
+# class Trash(pygame.sprite.Sprite):
+#   def __init__(self):
+#     super(Trash, self).__init__()
 
-    # choose trash type
-    trash_choice = random.choices(list(range(0, 4, 1)), TRASH_WEIGHTS)
-    tr_c = trash_choice[0]
-    x = random.randint(0, SCREEN_WIDTH)
-    y = random.randint(0, 10)
-    if tr_c == 2:
-      r = random.uniform(TRASH_SIZES[tr_c][0], TRASH_SIZES[tr_c][1])/2.0
-      self.surf = pygame.Surface((r*2.0, r*2.0))
-      self.surf.fill((255, 128, 0))
-      pygame.draw.circle(self.surf, (255, 128, 0), (r,r), r)
-    elif tr_c == 3:
-      r = random.uniform(TRASH_SIZES[tr_c][0], TRASH_SIZES[tr_c][1])/2.0
-      self.surf = pygame.Surface((r*2.0, r*2.0))
-      self.surf.fill((255, 0, 0))
-      pygame.draw.circle(self.surf, (255, 0, 0), (r,r), r)
-    else:
-      self.surf = pygame.Surface((1, 1))
-      self.surf.fill((0, 128, 255))
+#     # choose trash type
+#     trash_choice = random.choices(list(range(0, 4, 1)), TRASH_WEIGHTS)
+#     tr_c = trash_choice[0]
+#     x = random.randint(0, SCREEN_WIDTH)
+#     y = random.randint(0, 10)
+#     if tr_c == 2:
+#       r = random.uniform(TRASH_SIZES[tr_c][0], TRASH_SIZES[tr_c][1])/2.0
+#       self.surf = pygame.Surface((r*2.0, r*2.0))
+#       self.surf.fill((255, 128, 0))
+#       pygame.draw.circle(self.surf, (255, 128, 0), (r,r), r)
+#     elif tr_c == 3:
+#       r = random.uniform(TRASH_SIZES[tr_c][0], TRASH_SIZES[tr_c][1])/2.0
+#       self.surf = pygame.Surface((r*2.0, r*2.0))
+#       self.surf.fill((255, 0, 0))
+#       pygame.draw.circle(self.surf, (255, 0, 0), (r,r), r)
+#     else:
+#       self.surf = pygame.Surface((1, 1))
+#       self.surf.fill((0, 128, 255))
       
-    self.rect = self.surf.get_rect(
-      center = (random.randint(0, SCREEN_WIDTH),
-          random.randint(0, 10)))
-    #self.pos = Vector2(self.rect.center)
-    self.speed = 3
-    self.mass = random.uniform(TRASH_MASS[tr_c][0], TRASH_MASS[tr_c][1])
+#     self.rect = self.surf.get_rect(
+#       center = (random.randint(0, SCREEN_WIDTH),
+#           random.randint(0, 10)))
+#     #self.pos = Vector2(self.rect.center)
+#     self.speed = 3
+#     self.mass = random.uniform(TRASH_MASS[tr_c][0], TRASH_MASS[tr_c][1])
 
-  def update(self):
-    # self.pos += (-self.speed/3, self.speed)
-    # self.rect.center = self.pos
-    self.rect.move_ip(-self.speed/3, +self.speed)
-    if self.rect.bottom >= SCREEN_HEIGHT:
-      self.kill()
-    if self.rect.left < 0:
-      self.kill()
+#   def update(self):
+#     # self.pos += (-self.speed/3, self.speed)
+#     # self.rect.center = self.pos
+#     self.rect.move_ip(-self.speed/3, +self.speed)
+#     if self.rect.bottom >= SCREEN_HEIGHT:
+#       self.kill()
+#     if self.rect.left < 0:
+#       self.kill()
 
 
 ############################### Trash Sensor ###################################
@@ -123,10 +121,10 @@ class Trash_Sensor:
     y /= self.enviro.pixels_per_meter
     pygame_heading = heading
     heading = -heading + math.pi/2
-    sonar_dist_from_center = 2.2 # m
-    x += sonar_dist_from_center*math.cos(heading)
-    y += sonar_dist_from_center*math.sin(heading)
-
+    sonar_pos = (5.09, 2.28) # m
+    x += sonar_pos[0]*math.cos(heading) - sonar_pos[1]*math.sin(heading)
+    y += sonar_pos[0]*math.sin(heading) + sonar_pos[1]*math.cos(heading)
+    
     self.sonar_cone_sprite.update((x*self.enviro.pixels_per_meter,y*self.enviro.pixels_per_meter), pygame_heading)
 
     self.detected_pieces = []

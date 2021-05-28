@@ -39,8 +39,8 @@ class Trash_Storage:
 MAX_SPEED = 10 # final max boat speed in range [5,10]
 OPERATIONAL_SPEED = 6 # operational speed in range [2,5] knots or [1.03, 2.57] m/s
 
-BOAT_LENGTH = 142 # final boat length in range [5, 20] meters -- 142px
-BOAT_WIDTH = 82 # final boat width in range [2, 6] meters -- 82px
+BOAT_LENGTH = 10.1 # 10.1 m
+BOAT_WIDTH = 6.03 # 6.03 m
 BOAT_HEIGHT = 6 # final boat height in range [2, 6] meters
 PROPELLER_OFFSET = 2.286 # distance of propellers from center of boat (meters)
 # TACTICAL_DIAMETER = 4*BOAT_LENGTH # final boat tactical diameter < 5*length
@@ -69,7 +69,7 @@ class Boat(pygame.sprite.Sprite):
     """
     # pygame commands for simulation
     super(Boat, self).__init__()
-    self.surf = pygame.image.load("assets/sccr_boat.png").convert()
+    self.surf = pygame.transform.scale(pygame.image.load("assets/sccr_boat.png").convert(), (np.rint(BOAT_WIDTH*pixels_per_meter).astype(int), np.rint(BOAT_LENGTH*pixels_per_meter).astype(int)))
     self.surf.set_colorkey((255, 255, 255), RLEACCEL)
     self.orig_surf = self.surf
     self.rect = self.surf.get_rect(
@@ -86,9 +86,9 @@ class Boat(pygame.sprite.Sprite):
     self.pixels_per_meter = pixels_per_meter
 
     # boat dimensions in meters
-    self.length = BOAT_LENGTH
-    self.width = BOAT_WIDTH
-    self.height = BOAT_HEIGHT
+    # self.length = BOAT_LENGTH
+    # self.width = BOAT_WIDTH
+    # self.height = BOAT_HEIGHT
     self.l_prop_offset = -PROPELLER_OFFSET
     self.r_prop_offset = PROPELLER_OFFSET
     # self.tact_diam = TACTICAL_DIAMETER
@@ -144,9 +144,9 @@ class Boat(pygame.sprite.Sprite):
     # if self.rect.bottom >= SCREEN_HEIGHT:
     #     self.rect.bottom = SCREEN_HEIGHT
 
-    # Propeller thrust model
-    thrust_l = PROPELLER_THRUST_COEFFICIENT * abs(l_motor_speed) * l_motor_speed
-    thrust_r = PROPELLER_THRUST_COEFFICIENT * abs(r_motor_speed) * r_motor_speed
+    # Propeller thrust model. Propellers are at a 10 degree angle, so scale thrust accordingly.
+    thrust_l = PROPELLER_THRUST_COEFFICIENT * cos(radians(10)) * abs(l_motor_speed) * l_motor_speed
+    thrust_r = PROPELLER_THRUST_COEFFICIENT * cos(radians(10)) * abs(r_motor_speed) * r_motor_speed
     force_l = self.direction * thrust_l
     force_r = self.direction * thrust_r
     torque_l = thrust_l * self.l_prop_offset
