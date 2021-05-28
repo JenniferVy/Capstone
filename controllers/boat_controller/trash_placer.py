@@ -120,7 +120,7 @@ def place_trash(root_nodes, boat_x, boat_z, W, L, use_example=False):
               immersionProperties [
                 ImmersionProperties {{
                   fluidName "fluid"
-                  dragForceCoefficients 0 0 0
+                  dragForceCoefficients 0.01 0.01 0.01
                   dragTorqueCoefficients 0 0 0
                   viscousResistanceForceCoefficient 0
                   viscousResistanceTorqueCoefficient 0
