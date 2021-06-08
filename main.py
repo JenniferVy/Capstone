@@ -35,7 +35,7 @@ pygame.init()
 myfont = pygame.font.SysFont("monospace", 16)
 
 clock = pygame.time.Clock()
-dt = 0.125
+dt = 0.1
 PLAYBACK_SPEED = 1 # e.g. 2 for playback twice as fast as reality
 FRAMES_PER_SECOND = PLAYBACK_SPEED / dt
 

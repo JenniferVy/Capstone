@@ -8,7 +8,7 @@ BOAT_LENGTH = 10.1 # m
 WAYPOINT_THRESHOLD = 30 # (m) distance from waypoint when it is considered reached
 TRASH_SIZE_THRESHOLD = 0.5 # (m) smallest trash size to go after
 MAX_TRASH_SIZE = 2.0 # (m) max trash size to go after
-AZIMUTH_PER_DISTANCE_THRESHOLD = math.radians(130/2) / 30 # (rad/m) max azimuth of trash to go after relative to distance away (because distance determines required turning radius)
+AZIMUTH_PER_DISTANCE_THRESHOLD = math.radians(130/2) / 40 # (rad/m) max azimuth of trash to go after relative to distance away (because distance determines required turning radius)
 TRASH_COLLECTION_TIMEOUT = 2 # (seconds) amount of time to continue forward after trash is expected to hit conveyor belt
 
 OPERATIONAL_SPEED = 1.5 # (m/s) operational speed in range [2,5] knots or [1.03, 2.57] m/s

@@ -3,6 +3,7 @@
 import pickle
 import math
 import matplotlib.pyplot as plt
+import numpy as np
 
 log_file = "report_25km.pickle"
 
@@ -24,8 +25,13 @@ for piece in log.big_trash_mass_list:
     mega_trash_mass += piece.mass
 print("collected {} kg of megaplastics:".format(mega_trash_mass))
 
-print("small plastic collection rate: {} kg/km".format(small_trash_mass/distance_travelled))
-print("megaplastic collection rate: {} kg/km".format(mega_trash_mass/distance_travelled))
+total_trash_mass = small_trash_mass + mega_trash_mass
+print("collected {} kg total of plastic:".format(total_trash_mass))
+
+print("small plastic collection rate: {} kg/km".format(small_trash_mass / distance_travelled))
+print("megaplastic collection rate: {} kg/km".format(mega_trash_mass / distance_travelled))
+print("total collection rate: {} kg/km".format(total_trash_mass / distance_travelled))
+print("total collection rate: {} kg/h".format(total_trash_mass / (log.time/3600)))
 
 plt.figure()
 plt.plot(log.x_pos_log["t"], log.x_pos_log["x"])
@@ -39,4 +45,11 @@ plt.plot(log.y_pos_log["t"], log.y_pos_log["y"])
 plt.title("Boat Y Position")
 plt.xlabel("t (s)")
 plt.ylabel("y (m)")
+plt.show()
+
+plt.figure()
+plt.plot(log.heading_log["t"], np.rad2deg(log.heading_log["theta"]))
+plt.title("Boat Heading")
+plt.xlabel("t (s)")
+plt.ylabel("heading (degrees)")
 plt.show()
