@@ -2,6 +2,7 @@
 import sys
 import getpass
 
+
 from numpy import longdouble
 if getpass.getuser() == 'ryannemiroff':
     sys.path.append("/Applications/Webots.app/lib/controller/python38")
@@ -9,6 +10,8 @@ sys.path.append("../../") # Capstone folder
 
 import math
 import trash_placer
+
+from waves import frontLoad_Forces, frontLoad_Torques, sideLoad_Forces, sideLoad_Torques
 
 # You may need to import some classes of the controller module. Ex:
 #  from controller import Robot, Motor, DistanceSensor
@@ -34,7 +37,7 @@ sonar_blobs = []
 boat_pos = robot_node.getField("translation").getSFVec3f()
 area_width = 100 # m
 area_length = 100 # m
-trash_placer.place_trash(supervisor.getRoot().getField("children"), boat_pos[0], boat_pos[2], area_width, area_length)
+# trash_placer.place_trash(supervisor.getRoot().getField("children"), boat_pos[0], boat_pos[2], area_width, area_length)
 
 # get the time step of the current world.
 timestep = int(robot.getBasicTimeStep())
@@ -97,6 +100,9 @@ def display_sonar_targets():
 
     # print("-")
 
+
+# CONVEYOR CODE
+
 top_motor = robot.getDevice('top_motor')
 top_pos = 0.00
 top_motor.setPosition(float('+inf'))
@@ -147,21 +153,111 @@ def move_conveyor_cleats(time_step):
         cleat.getField('position').setSFFloat(cleat_bot_thresholds[c])
         # cleat_pos[c] = cleat_bot_thresholds[c]
   
+# WAVE FORCES CODE
 
+WAVE_SAMPLING_RATE = 5
+NUM_WAVE_VALUES = 479
+
+def add_front_wave(index):
+    # print('Entered Wave Function')
+    # Fx1 = frontLoad_Forces.at[index-1, 'front_Fx']
+    # Fy1 = frontLoad_Forces.at[index-1, 'front_Fy']
+    # Fz1 = frontLoad_Forces.at[index-1, 'front_Fz']
+    # Fx2 = frontLoad_Forces.at[index, 'front_Fx']
+    # Fy2 = frontLoad_Forces.at[index, 'front_Fy']
+    # Fz2 = frontLoad_Forces.at[index, 'front_Fz']
+    # robot_node.addForce([Fx2-Fx1, Fy2-Fy1, Fz2-Fz1], True)
+
+    # Tx1 = frontLoad_Torques.at[index-1, 'front_Tx']
+    # Ty1 = frontLoad_Torques.at[index-1, 'front_Ty']
+    # Tz1 = frontLoad_Torques.at[index-1, 'front_Tz']
+    # Tx2 = frontLoad_Torques.at[index, 'front_Tx']
+    # Ty2 = frontLoad_Torques.at[index, 'front_Ty']
+    # Tz2 = frontLoad_Torques.at[index, 'front_Tz']
+    # print(Tx2-Tx1, Ty2-Ty1, Tz2-Tz1)
+    # robot_node.addTorque([Tx2-Tx1, Ty2-Ty1, Tz2-Tz1], True)
+
+    Fx = frontLoad_Forces.at[index, 'front_Fx']
+    Fy = frontLoad_Forces.at[index, 'front_Fy']
+    Fz = frontLoad_Forces.at[index, 'front_Fz']
+    robot_node.addForce([Fy, Fz, Fx], True)
+
+    # Tx = frontLoad_Torques.at[index, 'front_Tx']
+    # Ty = frontLoad_Torques.at[index, 'front_Ty']
+    # Tz = frontLoad_Torques.at[index, 'front_Tz']
+    # print(Ty, Tz, Tx)
+    # robot_node.addTorque([Ty, Tz, Tx], True)
+
+    Tx = frontLoad_Torques.at[index, 'front_Tx']
+    Ty = frontLoad_Torques.at[index, 'front_Ty']
+    Tz = frontLoad_Torques.at[index, 'front_Tz']
+    robot_node.addTorque([-Tx, Ty, -Tz], True)
+    
+    # print(Fx)
+    # print("Added Front Wave Torque")
+
+def add_side_wave(index):
+    # Fx = sideLoad_Forces.at[index, 'side_Fx']
+    # Fy = sideLoad_Forces.at[index, 'side_Fy']
+    # Fz = sideLoad_Forces.at[index, 'side_Fz']
+    # robot_node.addForce([-Fz, -Fx, -Fy], True)
+
+    Tx = sideLoad_Torques.at[0, 'side_Tx']
+    Ty = sideLoad_Torques.at[0, 'side_Ty']
+    Tz = sideLoad_Torques.at[0, 'side_Tz']
+    robot_node.addTorque([Tz, Tx, Ty], True)
+
+    # Fx1 = sideLoad_Forces.at[index-1, 'side_Fx']
+    # Fy1 = sideLoad_Forces.at[index-1, 'side_Fy']
+    # Fz1 = sideLoad_Forces.at[index-1, 'side_Fz']
+    # Fx2 = sideLoad_Forces.at[index, 'side_Fx']
+    # Fy2 = sideLoad_Forces.at[index, 'side_Fy']
+    # Fz2 = sideLoad_Forces.at[index, 'side_Fz']
+    # robot_node.addForce([Fx2-Fx1, Fy2-Fy1, Fz2-Fz1], True)
+    # print("Added Side Wave")
 
 # Main loop:
 # - perform simulation steps until Webots is stopping the controller
 time = 0
+wave_counter = 0
+
+# Fx = frontLoad_Forces.at[0, 'front_Fx']
+# Fy = frontLoad_Forces.at[0, 'front_Fy']
+# Fz = frontLoad_Forces.at[0, 'front_Fz']
+# robot_node.addForce([-Fy, Fz, Fx], True)
+
+# Tx = frontLoad_Torques.at[0, 'front_Tx']
+# Ty = frontLoad_Torques.at[0, 'front_Ty']
+# Tz = frontLoad_Torques.at[0, 'front_Tz']
+# robot_node.addTorque([-Ty, Tz, Tx], True)
+
+# Fx = sideLoad_Forces.at[0, 'side_Fx']
+# Fy = sideLoad_Forces.at[0, 'side_Fy']
+# Fz = sideLoad_Forces.at[0, 'side_Fz']
+# robot_node.addForce([-Fz, -Fx, -Fy], True)
+
+Tx = sideLoad_Torques.at[0, 'side_Tx']
+Ty = sideLoad_Torques.at[0, 'side_Ty']
+Tz = sideLoad_Torques.at[0, 'side_Tz']
+robot_node.addTorque([Tx, Ty, -Tz], True)
+# print(Ty, Tz, Tx)
+# print('Added Torque')
+
 while robot.step(timestep) != -1:
     time += timestep
+    wave_counter += timestep
     # Read the sensors:
-    if time % SONAR_SAMPLING_RATE == 0: # this assumes SONAR_SAMPLING_RATE is divisible by timestep
-        display_sonar_targets()
+    # if time % SONAR_SAMPLING_RATE == 0: # this assumes SONAR_SAMPLING_RATE is divisible by indexstep
+    #     display_sonar_targets()
 
+    # Waves
     move_conveyor_cleats(time)
-    # Process sensor data here.
+    # add_front_wave(wave_counter)
+    add_side_wave(wave_counter)
+    if wave_counter == NUM_WAVE_VALUES:
+      wave_counter = 0
 
-    prop_r_motor.setVelocity(75) # demonstrate turning the boat by throttling the propeller motors
+    prop_r_motor.setVelocity(80) # demonstrate turning the boat by throttling the propeller motors
     prop_l_motor.setVelocity(100)
 
 # Enter here exit cleanup code.
