@@ -166,13 +166,14 @@ def generate_trash(W, H, boat_pos=(0,0), boat_box=(0,0), centered=False, mean_sc
                     avg_density[size_class][plastic_type] += material_densities[material[0]] * material[1]
 
         pieces: List[Trash] = [
-            Trash(x=100+00, y= 16, size=0.75, mass=0, density=0, size_class=SizeClass.MEGA, plastic_type=PlasticType.N),
-            Trash(x=100+10, y=100, size=0.75, mass=0, density=0, size_class=SizeClass.MEGA, plastic_type=PlasticType.N),
-            Trash(x=100-10, y=100, size=0.75, mass=0, density=0, size_class=SizeClass.MEGA, plastic_type=PlasticType.N),
-            Trash(x=100+15, y=130, size=1.00, mass=0, density=0, size_class=SizeClass.MEGA, plastic_type=PlasticType.N),
-            Trash(x=100-12, y=170, size=0.75, mass=0, density=0, size_class=SizeClass.MEGA, plastic_type=PlasticType.N),
-            Trash(x=100+15, y=210, size=2.50, mass=0, density=0, size_class=SizeClass.MEGA, plastic_type=PlasticType.N),
-            Trash(x=100+00, y=240, size=0.50, mass=0, density=0, size_class=SizeClass.MEGA, plastic_type=PlasticType.N)
+            Trash(x=100, y=125, size=0.8, mass=0, density=0, size_class=SizeClass.MEGA, plastic_type=PlasticType.N),
+            # Trash(x=100+00, y= 16, size=0.75, mass=0, density=0, size_class=SizeClass.MEGA, plastic_type=PlasticType.N),
+            # Trash(x=100+10, y=100, size=0.75, mass=0, density=0, size_class=SizeClass.MEGA, plastic_type=PlasticType.N),
+            # Trash(x=100-10, y=100, size=0.75, mass=0, density=0, size_class=SizeClass.MEGA, plastic_type=PlasticType.N),
+            # Trash(x=100+15, y=130, size=1.00, mass=0, density=0, size_class=SizeClass.MEGA, plastic_type=PlasticType.N),
+            # Trash(x=100-12, y=170, size=0.75, mass=0, density=0, size_class=SizeClass.MEGA, plastic_type=PlasticType.N),
+            # Trash(x=100+15, y=210, size=2.50, mass=0, density=0, size_class=SizeClass.MEGA, plastic_type=PlasticType.N),
+            # Trash(x=100+00, y=240, size=0.50, mass=0, density=0, size_class=SizeClass.MEGA, plastic_type=PlasticType.N)
         ]
 
         for piece in pieces:

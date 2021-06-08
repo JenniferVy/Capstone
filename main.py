@@ -21,15 +21,15 @@ from pygame.locals import (
     QUIT,
 )
 
-display_graphics = False 
+display_graphics = True 
 
 gps_path = []
-for i in range(30):
-    gps_path.append((100, 100 + (i+1)*1000)) # 200 km straight line with 1 km spaced waypoints
-print(gps_path)
+# for i in range(30):
+#     gps_path.append((100, 100 + (i+1)*1000)) # 200 km straight line with 1 km spaced waypoints
+# print(gps_path)
 
 WORLD_WIDTH = 200 # meters
-WORLD_HEIGHT = 30200
+WORLD_HEIGHT = 500
 
 pygame.init()
 myfont = pygame.font.SysFont("monospace", 16)
@@ -114,6 +114,18 @@ while running:
     
     pressed_keys = pygame.key.get_pressed()
 
+    # interactive demo
+    if pressed_keys[K_UP]:
+        environment.trash_sprite_list[0].vel = (0, -10)
+    elif pressed_keys[K_DOWN]:
+        environment.trash_sprite_list[0].vel = (0, 10)
+    elif pressed_keys[K_LEFT]:
+        environment.trash_sprite_list[0].vel = (-10, 0)
+    elif pressed_keys[K_RIGHT]:
+        environment.trash_sprite_list[0].vel = (10, 0)
+    else:
+        environment.trash_sprite_list[0].vel = (0, 0)
+
     # Control the boat
     # controller.keyboardInput(pressed_keys, dt) # Motor control via user input
     boat.update(*controller.top_level_control(dt), dt)
@@ -128,7 +140,7 @@ while running:
     #         boat.setOperationState(False)
             #wave.kill()
     
-    trash_collected = pygame.sprite.spritecollide(boat, environment.trash_sprites, True)
+    trash_collected = pygame.sprite.spritecollide(boat, environment.trash_sprites, False)
     for trash in trash_collected:
         environment.collect_trash(trash, boat.trash_storage, logger)
     
@@ -154,14 +166,14 @@ while running:
         real_screen.fill('white')
         real_screen.blit(screen, (SCREEN_WIDTH/2-boat.pos[0], SCREEN_HEIGHT/2-boat.pos[1]))
 
-        # tps, tpd = 0, 0
-        # trash_text = myfont.render("Trash Collected [kg]: {trash:.4f}".format(
-        #     trash = boat.trash_storage.collected_mass), 1, (0,0,0))
+        tps, tpd = 0, 0
+        trash_text = myfont.render("Trash Collected [kg]: {trash:.4f}".format(
+            trash = boat.trash_storage.collected_mass), 1, (0,0,0))
         # tps_text = myfont.render("Trash per Time [kg/s]: {tps:.4f}".format(
         #     tps = boat.trash_storage.collected_mass/(pygame.time.get_ticks()/1000.0)), 1, (0,0,0))
         # tpd_text = myfont.render("Trash per Distance Travelled [kg/m]: {tpd:.4f}".format( 
         #     tpd = boat.trash_storage.collected_mass/(boat.dist_travelled/1000.0) if boat.dist_travelled != 0 else 0), 1, (0,0,0))
-        # real_screen.blit(trash_text, (5, 10))
+        real_screen.blit(trash_text, (5, 10))
         # real_screen.blit(tps_text, (5, 25))
         # real_screen.blit(tpd_text, (5, 40))
         pygame.display.flip()

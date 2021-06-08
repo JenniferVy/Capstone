@@ -62,8 +62,10 @@ class Wave(pygame.sprite.Sprite):
 
 ################################## Trash ######################################
 class TrashSprite(pygame.sprite.Sprite):
-    def __init__(self, color, pos, radius):
+    def __init__(self, color, pos, radius, piece, pixels_per_meter):
         super().__init__()
+        self.piece = piece
+        self.pixels_per_meter = pixels_per_meter
         self.image = pygame.Surface(((radius+4)*2, (radius+4)*2), pygame.SRCALPHA)
         color = pygame.Color(color)
         color.a = 127
@@ -77,6 +79,10 @@ class TrashSprite(pygame.sprite.Sprite):
         self.pos += self.vel
         self.rect.center = self.pos
 
+        # for demo:
+        self.piece.x = self.pos[0] / self.pixels_per_meter
+        self.piece.y = self.pos[1] / self.pixels_per_meter
+
 
 ############################### Environment ###################################
 class Environment:
@@ -87,14 +93,14 @@ class Environment:
         self.areaW = width
         self.areaL = length
         self.pixels_per_meter = pixels_per_meter
-        self.trash_pieces: List[Trash] = generate_trash(self.areaW, self.areaL, use_example=False)
+        self.trash_pieces: List[Trash] = generate_trash(self.areaW, self.areaL, use_example=True)
         self.trash_sprites = pygame.sprite.Group()
         self.trash_sprite_list = []
 
         for piece in self.trash_pieces:
             pixel_pos = np.array((piece.x, piece.y)) * self.pixels_per_meter
             pixel_radius = piece.size/2 * self.pixels_per_meter
-            self.trash_sprite_list.append(TrashSprite(size_class_colors[piece.size_class], pixel_pos, pixel_radius))
+            self.trash_sprite_list.append(TrashSprite(size_class_colors[piece.size_class], pixel_pos, pixel_radius, piece, pixels_per_meter))
             self.trash_sprites.add(self.trash_sprite_list[-1])
 
     def collect_trash(self, sprite, trash_storage, logger):
@@ -106,5 +112,7 @@ class Environment:
             print("Trash mass reached capacity!")
             logger.final_report()
 
-        sprite.kill()
-        piece.size = 0
+        # don't destroy trash for demo
+        sprite.pos[1] += 30
+        # sprite.kill()
+        # piece.size = 0

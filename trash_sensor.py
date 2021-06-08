@@ -152,6 +152,7 @@ class Trash_Sensor:
                         self.detected_trash_sprites.add(sprite)
                         self.detected_trash_sprite_lookup[i] = sprite
                     else:
+                        self.detected_trash_sprite_lookup[i].pos = pygame.math.Vector2(piece.x, piece.y) * self.enviro.pixels_per_meter
                         del old_sprites[i]
 
     for piece_key in old_sprites:

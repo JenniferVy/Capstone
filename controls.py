@@ -103,7 +103,7 @@ class Controls:
             for object in self.sensors.get_sonar_objects():
                 pos_diff = math.sqrt(trash_goal.distance**2 + object.distance**2 - 2*trash_goal.distance*object.distance*math.cos(object.azimuth-trash_goal.azimuth)) # distance from polar coords
                 size_percent_diff = abs(object.size_est - trash_goal.size_est) / trash_goal.size_est
-                if pos_diff < 0.5 and size_percent_diff < 0.2: # pos_diff: [meters], size_percent_diff: [%]
+                if pos_diff < 2.5 and size_percent_diff < 0.2: # pos_diff: [meters], size_percent_diff: [%]
                     self.trash_goal = object
                     break
             if self.trash_goal is None:
