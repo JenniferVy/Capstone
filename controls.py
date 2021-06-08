@@ -5,10 +5,10 @@ from logger import Logger
 
 BOAT_LENGTH = 10.1 # m
 
-WAYPOINT_THRESHOLD = 15 # (m) distance from waypoint when it is considered reached
+WAYPOINT_THRESHOLD = 30 # (m) distance from waypoint when it is considered reached
 TRASH_SIZE_THRESHOLD = 0.5 # (m) smallest trash size to go after
 MAX_TRASH_SIZE = 2.0 # (m) max trash size to go after
-AZIMUTH_PER_DISTANCE_THRESHOLD = 1.57 / 100 # (rad/m) max azimuth of trash to go after relative to distance away (because distance determines required turnin radius)
+AZIMUTH_PER_DISTANCE_THRESHOLD = math.radians(130/2) / 30 # (rad/m) max azimuth of trash to go after relative to distance away (because distance determines required turning radius)
 TRASH_COLLECTION_TIMEOUT = 2 # (seconds) amount of time to continue forward after trash is expected to hit conveyor belt
 
 OPERATIONAL_SPEED = 1.5 # (m/s) operational speed in range [2,5] knots or [1.03, 2.57] m/s
@@ -73,6 +73,7 @@ class Controls:
     def top_level_control(self, dt):
         boat_pos = self.sensors.get_pos()
         self.logger.log_pos(boat_pos)
+        self.logger.log_heading(self.sensors.get_heading())
 
         # if there is a GPS goal to go to, determine heading
         gps_goal_heading = None
@@ -191,6 +192,8 @@ class Controls:
             l_motor_speed = 0
         if (r_motor_speed < 0):
             r_motor_speed = 0
+
+        self.logger.log_motors(l_motor_speed, r_motor_speed)
 
         return l_motor_speed, r_motor_speed
 

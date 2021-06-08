@@ -1,3 +1,4 @@
+from matplotlib.pyplot import pie
 from trash_placement import *
 import pygame
 import random
@@ -61,9 +62,8 @@ class Wave(pygame.sprite.Sprite):
 
 ################################## Trash ######################################
 class TrashSprite(pygame.sprite.Sprite):
-    def __init__(self, screen_rect, color, pos, radius, mass):
+    def __init__(self, color, pos, radius):
         super().__init__()
-        self.mass = mass
         self.image = pygame.Surface(((radius+4)*2, (radius+4)*2), pygame.SRCALPHA)
         color = pygame.Color(color)
         color.a = 127
@@ -72,7 +72,6 @@ class TrashSprite(pygame.sprite.Sprite):
         self.rect = self.image.get_rect(center=pos)
         self.vel = pygame.Vector2(0, 0)
         self.pos = pygame.Vector2(self.rect.center)
-        self.screen_rect = screen_rect
 
     def update(self):
         self.pos += self.vel
@@ -84,22 +83,28 @@ class Environment:
     """
     Micmics trash distribution of GPGP 
     """
-    def __init__(self, width, length, pixels_per_meter, screen):
+    def __init__(self, width, length, pixels_per_meter):
         self.areaW = width
         self.areaL = length
         self.pixels_per_meter = pixels_per_meter
-        self.screen = screen
-        self.screen_rect = screen.get_rect()
-        self.trash_pieces: List[Trash] = generate_trash(self.areaW, self.areaL, use_example=True)
+        self.trash_pieces: List[Trash] = generate_trash(self.areaW, self.areaL, use_example=False)
         self.trash_sprites = pygame.sprite.Group()
         self.trash_sprite_list = []
 
         for piece in self.trash_pieces:
             pixel_pos = np.array((piece.x, piece.y)) * self.pixels_per_meter
             pixel_radius = piece.size/2 * self.pixels_per_meter
-            self.trash_sprite_list.append(TrashSprite(self.screen_rect, size_class_colors[piece.size_class], pixel_pos, pixel_radius, piece.mass))
+            self.trash_sprite_list.append(TrashSprite(size_class_colors[piece.size_class], pixel_pos, pixel_radius))
             self.trash_sprites.add(self.trash_sprite_list[-1])
 
-    def kill_trash(self, sprite):
+    def collect_trash(self, sprite, trash_storage, logger):
+        piece = self.trash_pieces[self.trash_sprite_list.index(sprite)]
+        trash_storage.collected_mass += piece.mass
+        logger.log_trash(piece)
+
+        if trash_storage.collected_mass >= trash_storage.mass_capacity:
+            print("Trash mass reached capacity!")
+            logger.final_report()
+
         sprite.kill()
-        self.trash_pieces[self.trash_sprite_list.index(sprite)].size = 0
+        piece.size = 0

@@ -23,14 +23,13 @@ class SonarCone(pygame.sprite.Sprite):
         self.rect.center = self.pos
 
 class TrashOutline(pygame.sprite.Sprite):
-    def __init__(self, screen_rect, pos, radius):
+    def __init__(self, pos, radius):
         super().__init__()
         self.image = pygame.Surface(((radius+4)*2, (radius+4)*2), pygame.SRCALPHA)
         pygame.draw.circle(self.image, 'purple', (radius+4, radius+4), radius+4, width=1)
         self.rect = self.image.get_rect(center=pos)
         self.vel = pygame.Vector2(0, 0)
         self.pos = pygame.Vector2(self.rect.center)
-        self.screen_rect = screen_rect
 
     def update(self):
         self.pos += self.vel
@@ -93,8 +92,8 @@ TRASH_SENSOR_HORIZONTAL_RESOLUTION = 0.18 # degrees TODO: This is based on beam 
 BACKSCATTERING_CROSS_SECTION_SCALING = 0.5 # The backscattering cross-section of a piece of trash relative to a sphere with the same diameter.
 
 # Assume miniumum detectable object size is related to the square of the detection distance, due to the inverse square law.
-TRASH_SENSOR_MIN_OBJECT_SIZE_OVER_DISTANCE_4 = 1 / 60**4 # Tyler Whitaker from Teledyne Marine estimates (based on experience) that the sonar can detect a 1m x 1m objects at 60m range.
-TRASH_SENSOR_MIN_OBJECT_SIZE_OVER_DISTANCE_4 /= BACKSCATTERING_CROSS_SECTION_SCALING # Scale assuming the above statement is for a 1m diameter sphere. This scaling represents how much sound a piece of trash may reflect relative to the same size (equal diameter) sphere.
+TRASH_SENSOR_MIN_OBJECT_SIZE_2_OVER_DISTANCE_4 = 1**2 / 60**4 # Tyler Whitaker from Teledyne Marine estimates (based on experience) that the sonar can detect a 1m x 1m objects at 60m range.
+TRASH_SENSOR_MIN_OBJECT_SIZE_2_OVER_DISTANCE_4 /= BACKSCATTERING_CROSS_SECTION_SCALING # Scale assuming the above statement is for a 1m diameter sphere. This scaling represents how much sound a piece of trash may reflect relative to the same size (equal diameter) sphere.
 
 class Trash_Sensor:
   """
@@ -136,7 +135,7 @@ class Trash_Sensor:
         # todo distance from boat -> can detect this size and in range? -> angle w/ heading -> within FOV?
         distance = math.sqrt((piece.x-x)**2 + (piece.y-y)**2)
         if distance <= TRASH_SENSOR_RANGE:
-            min_detectable_size = TRASH_SENSOR_MIN_OBJECT_SIZE_OVER_DISTANCE_4 * distance**4
+            min_detectable_size = math.sqrt(TRASH_SENSOR_MIN_OBJECT_SIZE_2_OVER_DISTANCE_4 * distance**4)
             if piece.size >= min_detectable_size:
                 angle = math.atan2(piece.y-y, piece.x-x) - heading
                 while angle > math.pi:
@@ -149,7 +148,7 @@ class Trash_Sensor:
                     if i not in self.detected_trash_sprite_lookup:
                         pixel_pos = np.array((piece.x, piece.y)) * self.enviro.pixels_per_meter
                         pixel_radius = piece.size/2 * self.enviro.pixels_per_meter
-                        sprite = TrashOutline(self.enviro.screen_rect, pixel_pos, pixel_radius)
+                        sprite = TrashOutline(pixel_pos, pixel_radius)
                         self.detected_trash_sprites.add(sprite)
                         self.detected_trash_sprite_lookup[i] = sprite
                     else:

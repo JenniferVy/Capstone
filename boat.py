@@ -10,7 +10,7 @@ from pygame.locals import (
 
 ############################### Trash Storage ##################################
 
-MAX_LOAD = 5000 # max trash load capacity in kg
+STORAGE_MAX_LOAD = 4500 # max trash load capacity in kg, based on 15 m^3 box and 300 kg/m^3 bulk density of plastic ()
 
 class Trash_Storage:
   """ Stores trash as boat sweeps GPGP """
@@ -20,8 +20,8 @@ class Trash_Storage:
 
     params: None
     """
-    self.max_stor = MAX_LOAD
-    self.trash_cap = 0
+    self.mass_capacity = STORAGE_MAX_LOAD
+    self.collected_mass = 0
     self.conveyor_on = False
 
   def activateConveyor(self, state):
@@ -41,6 +41,7 @@ OPERATIONAL_SPEED = 6 # operational speed in range [2,5] knots or [1.03, 2.57] m
 
 BOAT_LENGTH = 10.1 # 10.1 m
 BOAT_WIDTH = 6.03 # 6.03 m
+CONVEYOR_OPENING_WIDTH = 4.5 # m
 BOAT_HEIGHT = 6 # final boat height in range [2, 6] meters
 PROPELLER_OFFSET = 2.286 # distance of propellers from center of boat (meters)
 # TACTICAL_DIAMETER = 4*BOAT_LENGTH # final boat tactical diameter < 5*length
@@ -58,7 +59,7 @@ OPER_MAX_SURV_WAVE_HEIGHT = 2
 class Boat(pygame.sprite.Sprite):
   """ Boat that will move through GPGP """
 
-  def __init__(self, start_long = 0, start_lat = 0, angle = 0, fuel = 80, trash_stor = Trash_Storage(), pixels_per_meter = 10):
+  def __init__(self, pixels_per_meter, logger, start_long = 0, start_lat = 0, angle = 0, fuel = 80, trash_stor = Trash_Storage()):
     """ Boat Class Constructor to initialize the object
 
     params:
@@ -69,21 +70,18 @@ class Boat(pygame.sprite.Sprite):
     """
     # pygame commands for simulation
     super(Boat, self).__init__()
+    self.pixels_per_meter = pixels_per_meter
+    self.logger = logger
+
     self.surf = pygame.transform.scale(pygame.image.load("assets/sccr_boat.png").convert(), (np.rint(BOAT_WIDTH*pixels_per_meter).astype(int), np.rint(BOAT_LENGTH*pixels_per_meter).astype(int)))
     self.surf.set_colorkey((255, 255, 255), RLEACCEL)
     self.orig_surf = self.surf
-    self.rect = self.surf.get_rect(
-      center=(
-                start_long,
-                start_lat,
-            )
-    )
-    self.pos = Vector2(self.rect.center)
+    self.pos = Vector2((start_long, start_lat))
     # self.offset = Vector2(TACTICAL_DIAMETER/4, 0)
     self.angle = angle
     self.set_direction()
-
-    self.pixels_per_meter = pixels_per_meter
+    self.rect = pygame.Rect(0, 0, 0, 0)
+    self.make_collision_rect()
 
     # boat dimensions in meters
     # self.length = BOAT_LENGTH
@@ -126,14 +124,15 @@ class Boat(pygame.sprite.Sprite):
     self.ang_vel += self.ang_acc * dt
 
     # Use average velocity of current and previous time steps to update position
-    old_pos = self.pos
+    old_pos = (self.pos[0], self.pos[1])
     self.pos += self.pixels_per_meter * (prev_lin_vel + self.lin_vel) / 2 * dt
     self.rect.center = self.pos
     self.angle += degrees((prev_ang_vel + self.ang_vel) / 2 * dt)
     self.rotate()
 
+    # TODO dist_travelled calculations might be off, seems to be overestimating too much
     self.dist_travelled += sqrt((old_pos[0] - self.pos[1])**2 + (old_pos[1] - self.pos[1])**2) / self.pixels_per_meter
-
+    self.logger.update_distance_travelled(self.dist_travelled)
     # # Keep boat on the screen
     # if self.rect.left < 0:
     #     self.rect.left = 0
@@ -168,9 +167,19 @@ class Boat(pygame.sprite.Sprite):
   def rotate(self):
     """Rotate the image of the sprite around a pivot point."""
     self.surf = pygame.transform.rotate(self.orig_surf, self.angle)
-    self.rect = self.surf.get_rect()
-    self.rect.center = self.pos
     self.set_direction()
+    self.make_collision_rect()
+
+  def make_collision_rect(self):
+    # make a rectangle that has the proper width when projected perpendicular to the conveyor belt
+    collection_width = self.pixels_per_meter*CONVEYOR_OPENING_WIDTH - 8 # make collision area smaller by 8 pixels because trash sprites have 4 pixel radius highlight
+
+    self.rect.width = max(abs(collection_width * cos(radians(self.angle))), 2)
+    self.rect.height = max(abs(collection_width * sin(radians(self.angle))), 2)
+
+    collision_x_offset = (self.surf.get_height()/2 - 4) * sin(radians(self.angle))
+    collision_y_offset = (self.surf.get_height()/2 - 4) * cos(radians(self.angle))
+    self.rect.center = (self.pos[0] + collision_x_offset, self.pos[1] + collision_y_offset)
 
   def stableState(self):
     """
