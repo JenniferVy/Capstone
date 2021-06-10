@@ -1,0 +1,82 @@
+#VRML_OBJ R2021a utf8
+DEF TRASH_7 Solid {
+  translation 5.33017 0.00402 -4.7827
+  children [
+    DEF TRASH_7_SHAPE Group {
+      children [
+        Transform {
+          translation 0 0 -0.025
+          children [
+            Shape {
+              appearance PBRAppearance {
+                baseColor 0.5 0.5 0.5
+                metalness 0
+                emissiveIntensity 0
+              }
+              geometry Box {
+                size 0.05 0.05 7.29935e-05
+              }
+            }
+          ]
+        }
+        Transform {
+          translation 0 0 0.025
+          children [
+            Shape {
+              appearance PBRAppearance {
+                baseColor 0.5 0.5 0.5
+                metalness 0
+                emissiveIntensity 0
+              }
+              geometry Box {
+                size 0.05 0.05 7.29935e-05
+              }
+            }
+          ]
+        }
+        Transform {
+          translation 0.025 0 0
+          children [
+            Shape {
+              appearance PBRAppearance {
+                baseColor 0.5 0.5 0.5
+                metalness 0
+                emissiveIntensity 0
+              }
+              geometry Box {
+                size 7.29935e-05 0.05 0.05
+              }
+            }
+          ]
+        }
+        Transform {
+          translation -0.025 0 0
+          children [
+            Shape {
+              appearance PBRAppearance {
+                baseColor 0.5 0.5 0.5
+                metalness 0
+                emissiveIntensity 0
+              }
+              geometry Box {
+                size 7.29935e-05 0.05 0.05
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+  name "trash_7"
+  immersionProperties [
+    ImmersionProperties {
+      fluidName "fluid"
+      dragForceCoefficients 0.001 0.001 0.001
+    }
+  ]
+  boundingObject USE TRASH_7_SHAPE
+  physics Physics {
+    density 900.5
+  }
+  radarCrossSection 0.0019746531033356662
+}

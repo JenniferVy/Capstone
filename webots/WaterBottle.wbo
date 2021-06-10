@@ -1,0 +1,34 @@
+#VRML_OBJ R2021a utf8
+DEF WATER_BOTTLE Solid {
+  translation 6.11 -0.129988 -3.09
+  rotation -1 0 0 -5.307179586466759e-06
+  children [
+    DEF WaterBottle_Shape WaterBottle {
+      rotation -1 0 0 1.5708
+      mass 0.5
+    }
+  ]
+  name "solid(1)"
+  immersionProperties [
+    ImmersionProperties {
+      fluidName "fluid"
+      dragForceCoefficients 0.001 0.001 0.001
+    }
+  ]
+  boundingObject Transform {
+    translation 0 0 -0.15
+    rotation -1 0 0 1.57
+    children [
+      Shape {
+        geometry Cylinder {
+          height 0.3
+          radius 0.045
+        }
+      }
+    ]
+  }
+  physics Physics {
+    density -1
+    mass 0.5
+  }
+}

@@ -1,0 +1,82 @@
+#VRML_OBJ R2021a utf8
+DEF TRASH_0 Solid {
+  translation 5.55168 -0.103629 -7.70227
+  children [
+    DEF TRASH_0_SHAPE Group {
+      children [
+        Transform {
+          translation 0 0 -0.13609866616509814
+          children [
+            Shape {
+              appearance PBRAppearance {
+                baseColor 0.5 0.5 0.5
+                metalness 0
+                emissiveIntensity 0
+              }
+              geometry Box {
+                size 0.2720704146715504 0.27232424998884214 0.00012691765864586424
+              }
+            }
+          ]
+        }
+        Transform {
+          translation 0 0 0.13609866616509814
+          children [
+            Shape {
+              appearance PBRAppearance {
+                baseColor 0.5 0.5 0.5
+                metalness 0
+                emissiveIntensity 0
+              }
+              geometry Box {
+                size 0.2720704146715504 0.27232424998884214 0.00012691765864586424
+              }
+            }
+          ]
+        }
+        Transform {
+          translation 0.13609866616509814 0 0
+          children [
+            Shape {
+              appearance PBRAppearance {
+                baseColor 0.5 0.5 0.5
+                metalness 0
+                emissiveIntensity 0
+              }
+              geometry Box {
+                size 0.00012691765864586424 0.27232424998884214 0.27232424998884214
+              }
+            }
+          ]
+        }
+        Transform {
+          translation -0.13609866616509814 0 0
+          children [
+            Shape {
+              appearance PBRAppearance {
+                baseColor 0.5 0.5 0.5
+                metalness 0
+                emissiveIntensity 0
+              }
+              geometry Box {
+                size 0.00012691765864586424 0.27232424998884214 0.27232424998884214
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+  name "trash_0"
+  immersionProperties [
+    ImmersionProperties {
+      fluidName "fluid"
+      dragForceCoefficients 0.001 0.001 0.001
+    }
+  ]
+  boundingObject USE TRASH_0_SHAPE
+  physics Physics {
+    density 900.5
+  }
+  radarCrossSection 0.029122759122051527
+}

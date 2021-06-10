@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+from logger import Logger
 from sensors import Sensors
 from boat import Boat
 from trash_sensor import *
@@ -20,44 +21,47 @@ from pygame.locals import (
     QUIT,
 )
 
+display_graphics = False 
+
+gps_path = []
+for i in range(30):
+    gps_path.append((100, 100 + (i+1)*1000)) # 200 km straight line with 1 km spaced waypoints
+print(gps_path)
+
+WORLD_WIDTH = 200 # meters
+WORLD_HEIGHT = 30200
+
 pygame.init()
 myfont = pygame.font.SysFont("monospace", 16)
 
 clock = pygame.time.Clock()
-dt = 0.1
-PLAYBACK_SPEED = 100 # e.g. 2 for playback twice as fast as reality
+dt = 0.125
+PLAYBACK_SPEED = 1 # e.g. 2 for playback twice as fast as reality
 FRAMES_PER_SECOND = PLAYBACK_SPEED / dt
 
 # Set up the drawing window
 SCREEN_WIDTH = 1280
 SCREEN_HEIGHT = 720
-PIXELS_PER_METER = 10
-
-WORLD_WIDTH = 200 # meters
-WORLD_HEIGHT = 250
+PIXELS_PER_METER = 5
 
 real_screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-screen = pygame.Surface((WORLD_WIDTH*PIXELS_PER_METER, WORLD_HEIGHT*PIXELS_PER_METER), pygame.SRCALPHA)
+if display_graphics:
+    screen = pygame.Surface((WORLD_WIDTH*PIXELS_PER_METER, WORLD_HEIGHT*PIXELS_PER_METER), pygame.SRCALPHA)
 
-ADD_WAVE = pygame.USEREVENT + 1
-pygame.time.set_timer(ADD_WAVE, 1000)
+# ADD_WAVE = pygame.USEREVENT + 1
+# pygame.time.set_timer(ADD_WAVE, 1000)
 
 # ADD_TRASH = pygame.USEREVENT + 2
 # pygame.time.set_timer(ADD_TRASH, 2000)
 
-gps_path = [
-    (60, 60),
-    (WORLD_WIDTH-60, 60),
-    (WORLD_WIDTH-60, WORLD_HEIGHT-60),
-    (60, WORLD_HEIGHT-60)
-]
-
-boat = Boat(pixels_per_meter=PIXELS_PER_METER, start_long=WORLD_WIDTH*PIXELS_PER_METER/2, start_lat=WORLD_HEIGHT*PIXELS_PER_METER/2)
-environment = Environment(SCREEN_WIDTH, SCREEN_HEIGHT, PIXELS_PER_METER, screen)
+logger = Logger(use_qt=True)
+logger.set_gps_path(gps_path)
+boat = Boat(PIXELS_PER_METER, logger, start_long=100*PIXELS_PER_METER, start_lat=100*PIXELS_PER_METER)
+environment = Environment(WORLD_WIDTH, WORLD_HEIGHT, PIXELS_PER_METER)
 sensor = Trash_Sensor(environment)
-controller = Controls(Sensors(boat, sensor, PIXELS_PER_METER), gps_path)
+controller = Controls(logger, Sensors(boat, sensor, PIXELS_PER_METER), gps_path)
 
-waves = pygame.sprite.Group()
+# waves = pygame.sprite.Group()
 trash_pieces = pygame.sprite.Group()
 # all_comp = pygame.sprite.Group()
 
@@ -98,10 +102,10 @@ while running:
         #     target_pos = pygame.mouse.get_pos()
         #     pos_target_sprite.update(target_pos)
 
-        elif event.type == ADD_WAVE:
-            new_wave = Wave() 
-            waves.add(new_wave)
-            # all_comp.add(new_wave)
+        # elif event.type == ADD_WAVE:
+        #     new_wave = Wave() 
+        #     waves.add(new_wave)
+        #     # all_comp.add(new_wave)
         
         # elif event.type == ADD_TRASH:
         #     new_trash = Trash()
@@ -116,51 +120,56 @@ while running:
 
     environment.trash_sprites.update()
     sensor.update(boat.pos.x, boat.pos.y, math.radians(boat.angle))
-    waves.update()
-    
-    # Fill the background with light blue
-    screen.fill((173, 216, 230))
+    # waves.update()
 
-    for w in waves:
-        screen.blit(w.surf, w.rect)
-
-    environment.trash_sprites.draw(screen)
-    sensor.draw(screen)
-
-    if controller.current_goal_index < len(controller.gps_path):
-        pos_target_sprite.update(pygame.Vector2(controller.gps_path[controller.current_goal_index]) * PIXELS_PER_METER)
-        screen.blit(pos_target_sprite.image, pos_target_sprite.rect)
-    
-    screen.blit(boat.surf, boat.rect)
-
-    # display world contents, and center around boat
-    real_screen.fill('white')
-    real_screen.blit(screen, (SCREEN_WIDTH/2-boat.pos[0], SCREEN_HEIGHT/2-boat.pos[1]))
-
-    waves_hit = pygame.sprite.spritecollide(boat, waves, False)
-    for wave in waves_hit:
-        if wave.size > boat.oper_surv_wave_height:
-            boat.setOperationState(False)
+    # waves_hit = pygame.sprite.spritecollide(boat, waves, False)
+    # for wave in waves_hit:
+    #     if wave.size > boat.oper_surv_wave_height:
+    #         boat.setOperationState(False)
             #wave.kill()
     
-    trash_collected = pygame.sprite.spritecollide(boat, environment.trash_sprites, True) # TODO collide with front of boat
+    trash_collected = pygame.sprite.spritecollide(boat, environment.trash_sprites, True)
     for trash in trash_collected:
-        boat.trash_storage.trash_cap += trash.mass
+        environment.collect_trash(trash, boat.trash_storage, logger)
+    
+    if display_graphics:
+        # Fill the background with light blue
+        screen.fill((173, 216, 230))
 
-    tps, tpd = 0, 0
-    trash_text = myfont.render("Trash Collected [kg]: {trash:.4f}".format(
-        trash = boat.trash_storage.trash_cap), 1, (0,0,0))
-    tps_text = myfont.render("Trash per Time [kg/s]: {tps:.4f}".format(
-        tps = boat.trash_storage.trash_cap/(pygame.time.get_ticks()/1000.0)), 1, (0,0,0))
-    tpd_text = myfont.render("Trash per Distance Travelled [kg/m]: {tpd:.4f}".format( 
-        tpd = boat.trash_storage.trash_cap/(boat.dist_travelled/1000.0) if boat.dist_travelled != 0 else 0), 1, (0,0,0))
-    real_screen.blit(trash_text, (5, 10))
-    real_screen.blit(tps_text, (5, 25))
-    real_screen.blit(tpd_text, (5, 40))
-    pygame.display.flip()
+        # for w in waves:
+        #     screen.blit(w.surf, w.rect)
+
+        environment.trash_sprites.draw(screen)
+        sensor.draw(screen)
+
+        if controller.current_goal_index < len(controller.gps_path):
+            pos_target_sprite.update(pygame.Vector2(controller.gps_path[controller.current_goal_index]) * PIXELS_PER_METER)
+            screen.blit(pos_target_sprite.image, pos_target_sprite.rect)
+        
+        # display boat
+        screen.blit(boat.surf, (boat.pos[0]-boat.surf.get_width()/2, boat.pos[1]-boat.surf.get_height()/2))
+        pygame.draw.rect(screen, "red", boat.rect) # display collision area for conveyor belt
+
+        # display world contents, and center around boat
+        real_screen.fill('white')
+        real_screen.blit(screen, (SCREEN_WIDTH/2-boat.pos[0], SCREEN_HEIGHT/2-boat.pos[1]))
+
+        # tps, tpd = 0, 0
+        # trash_text = myfont.render("Trash Collected [kg]: {trash:.4f}".format(
+        #     trash = boat.trash_storage.collected_mass), 1, (0,0,0))
+        # tps_text = myfont.render("Trash per Time [kg/s]: {tps:.4f}".format(
+        #     tps = boat.trash_storage.collected_mass/(pygame.time.get_ticks()/1000.0)), 1, (0,0,0))
+        # tpd_text = myfont.render("Trash per Distance Travelled [kg/m]: {tpd:.4f}".format( 
+        #     tpd = boat.trash_storage.collected_mass/(boat.dist_travelled/1000.0) if boat.dist_travelled != 0 else 0), 1, (0,0,0))
+        # real_screen.blit(trash_text, (5, 10))
+        # real_screen.blit(tps_text, (5, 25))
+        # real_screen.blit(tpd_text, (5, 40))
+        pygame.display.flip()
 
     # Ensure program maintains a rate of x frames per second
-    clock.tick(FRAMES_PER_SECOND)
+    logger.update_time(dt)
+    if display_graphics:
+        clock.tick(FRAMES_PER_SECOND)
 
 # Done! Time to quit.
 pygame.quit()

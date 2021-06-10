@@ -151,10 +151,45 @@ class Trash:
 
 # L: square side length (meters)
 # mean_scale: how much to scale concentrations compared to the mean
-def generate_trash(W, H, boat_pos=(0,0), boat_box=(0,0), centered=False, mean_scale=default_mean_scale, relevant_size_classes=[SizeClass.MESO, SizeClass.MACRO, SizeClass.MEGA]) -> List[Trash]:
-    pieces: List[Trash] = [
-        # Trash(x=130, y=120, size=0.75, mass=0, density=0, size_class=SizeClass.MEGA, plastic_type=PlasticType.N) # TODO temporary: hardcode megaplastic
-    ]
+def generate_trash(W, H, boat_pos=(0,0), boat_box=(0,0), centered=False, mean_scale=default_mean_scale, relevant_size_classes=[SizeClass.MESO, SizeClass.MACRO, SizeClass.MEGA], use_example=False) -> List[Trash]:
+    if use_example:
+        avg_density = {
+            SizeClass.MICRO: {},
+            SizeClass.MESO: {},
+            SizeClass.MACRO: {},
+            SizeClass.MEGA: {}
+        }
+        for size_class in plastic_materials:
+            for plastic_type in plastic_materials[size_class]:
+                avg_density[size_class][plastic_type] = 0
+                for material in plastic_materials[size_class][plastic_type]:
+                    avg_density[size_class][plastic_type] += material_densities[material[0]] * material[1]
+
+        pieces: List[Trash] = [
+            Trash(x=100+00, y= 16, size=0.75, mass=0, density=0, size_class=SizeClass.MEGA, plastic_type=PlasticType.N),
+            Trash(x=100+10, y=100, size=0.75, mass=0, density=0, size_class=SizeClass.MEGA, plastic_type=PlasticType.N),
+            Trash(x=100-10, y=100, size=0.75, mass=0, density=0, size_class=SizeClass.MEGA, plastic_type=PlasticType.N),
+            Trash(x=100+15, y=130, size=1.00, mass=0, density=0, size_class=SizeClass.MEGA, plastic_type=PlasticType.N),
+            Trash(x=100-12, y=170, size=0.75, mass=0, density=0, size_class=SizeClass.MEGA, plastic_type=PlasticType.N),
+            Trash(x=100+15, y=210, size=2.50, mass=0, density=0, size_class=SizeClass.MEGA, plastic_type=PlasticType.N),
+            Trash(x=100+00, y=240, size=0.50, mass=0, density=0, size_class=SizeClass.MEGA, plastic_type=PlasticType.N)
+        ]
+
+        for piece in pieces:
+            total_mass_for_type = mean_scale * mean_plastic_concentration[piece.size_class][piece.plastic_type][0] * (W/1000)*(H/1000)
+            n_pieces_for_type = mean_scale * mean_plastic_concentration[piece.size_class][piece.plastic_type][1] * (W/1000)*(H/1000)
+            min_log_size = math.log10(size_ranges[piece.size_class][0] / 100)
+            max_log_size = math.log10(size_ranges[piece.size_class][1] / 100)
+            avg_vol_per_piece = 1/(max_log_size - min_log_size) * ((10**3)**max_log_size - (10**3)**min_log_size) / math.log10(10**3)
+            total_vol = avg_vol_per_piece * n_pieces_for_type
+            piece_vol = piece.size**3
+            piece.mass = (piece_vol / total_vol) * total_mass_for_type
+
+            piece.density = avg_density[piece.size_class][piece.plastic_type]
+        
+        return pieces
+
+    pieces: List[Trash] = []
     for size_class in relevant_size_classes:
         for plastic_type in PlasticType:
             total_mass = mean_scale * mean_plastic_concentration[size_class][plastic_type][0] * (W/1000)*(H/1000)
@@ -230,7 +265,56 @@ def plot_trash(W, H, pieces: List[Trash], centered=False):
     plt.show()
 
 
+def calculate_expected_collection():
+    CONVEYOR_OPENING_WIDTH = 4.5 # m (from boat.py)
+    BACKSCATTERING_CROSS_SECTION_SCALING = 0.5 # (from trash_sensor.py)
+    TRASH_SENSOR_MIN_OBJECT_SIZE_2_OVER_DISTANCE_4 = 1**2 / 60**4
+    TRASH_SENSOR_MIN_OBJECT_SIZE_2_OVER_DISTANCE_4 /= BACKSCATTERING_CROSS_SECTION_SCALING
+
+    # calculate average sensing distance for megaplastics
+    k = TRASH_SENSOR_MIN_OBJECT_SIZE_2_OVER_DISTANCE_4
+    Dmin = size_ranges[SizeClass.MEGA][0] / 100
+    Dmax = size_ranges[SizeClass.MEGA][1] / 100
+    # do integral stuff on Wolfram Alpha (TODO fix to account for backscattering cross-section proportional to square of size)
+    avg_sensing_distance = (1 / (math.log10(Dmax) - math.log10(Dmin))) * 2 * ((Dmax**2/k)**(1/4) - (Dmin**2/k)**(1/4)) / math.log(10)    
+    avg_sensing_distance *= math.sin(math.radians(130/2)) # account for the fact that we only get 130 degrees FOV
+    # print((Dmin**2/k)**(1/4))
+    # print((Dmax**2/k)**(1/4))
+    # print(avg_sensing_distance)
+    megaplastic_collection_width = avg_sensing_distance * 2
+
+    small_trash_mass_concentration = 0
+    for size_class in [SizeClass.MESO, SizeClass.MACRO]:
+        for type in mean_plastic_concentration[size_class]:
+            small_trash_mass_concentration += mean_plastic_concentration[size_class][type][0]
+
+    megaplastic_mass_concentration = 0
+    for type in mean_plastic_concentration[SizeClass.MEGA]:
+        megaplastic_mass_concentration += mean_plastic_concentration[SizeClass.MEGA][type][0]
+        
+    small_trash_mass_per_dist = (CONVEYOR_OPENING_WIDTH / 1000) * small_trash_mass_concentration
+    megaplastic_mass_per_dist = (megaplastic_collection_width / 1000) * megaplastic_mass_concentration
+    total_mass_per_dist = small_trash_mass_per_dist + megaplastic_mass_per_dist
+    print("Average over GPGP:")
+    print("\tsmall trash mass collected per distance travelled: {} kg/km".format(small_trash_mass_per_dist))
+    print("\tmegaplastic mass collected per distance travelled: {} kg/km".format(megaplastic_mass_per_dist))
+    print("\ttotal mass collected per distance travelled: {} kg/km".format(total_mass_per_dist))
+    print("\ttotal mass collection rate at 1.5 m/s: {} kg/h".format(total_mass_per_dist * 1.5/1000 * 3600))
+    print()
+    small_trash_mass_per_dist *= default_mean_scale
+    megaplastic_mass_per_dist *= default_mean_scale
+    total_mass_per_dist *= default_mean_scale
+    print("Most concentrated areas of GPGP:")
+    print("\tsmall trash mass collected per distance travelled: {} kg/km".format(small_trash_mass_per_dist))
+    print("\tmegaplastic mass collected per distance travelled: {} kg/km".format(megaplastic_mass_per_dist))
+    print("\ttotal mass collected per distance travelled: {} kg/km".format(total_mass_per_dist))
+    print("\ttotal mass collection rate at 1.5 m/s: {} kg/h".format(total_mass_per_dist * 1.5/1000 * 3600))
+    print()
+
+
 def main():
+    calculate_expected_collection()
+
     W = 100 # area width (meters)
     H = 100 # area height (meters)
     # note, there is 1 piece of megaplastic every (527m^2)/sqrt(mean_scale)

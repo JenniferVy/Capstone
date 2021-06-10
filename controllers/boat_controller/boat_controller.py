@@ -10,6 +10,7 @@ sys.path.append("../../") # Capstone folder
 import math
 import trash_placer
 from webots_sensors import Sensors
+from logger import Logger
 from controls import Controls
 
 # You may need to import some classes of the controller module. Ex:
@@ -18,16 +19,14 @@ from controller import Supervisor
 
 conveyor_test = False # TODO don't place other trash and make boat move forward when this is true
 
-# PReconfigured waypoint path for boat
+# Preconfigured waypoint path for boat
 gps_path = [
-    (35, -35),
-    (-35, -35),
-    (-35, 35),
-    (35, 35)
+    (200, 300)
 ]
 
 CONTROLLER_SAMPLING_PERIOD = 40
-next_controller_step = 40 # should be after all sensors have measured their first value
+next_controller_step = 80 # Should be after all sensors have measured their first value. Wait extra time for gps speed to stabilize, because its first measurement it huge for some reason.
+last_controller_time = next_controller_step - CONTROLLER_SAMPLING_PERIOD
 
 NUM_TOP_CLEATS = 7
 
@@ -45,7 +44,7 @@ sonar_blobs = []
 boat_pos = robot_node.getPosition()
 area_width = 100 # m
 area_length = 100 # m
-trash_placer.place_trash(supervisor.getRoot().getField("children"), boat_pos[0], boat_pos[2], area_width, area_length)
+trash_placer.place_trash(supervisor.getRoot().getField("children"), boat_pos[0], boat_pos[2], area_width, area_length, use_example=True)
 
 # get the time step of the current world.
 timestep = int(robot.getBasicTimeStep())
@@ -55,8 +54,9 @@ compass = robot.getDevice('compass')
 gyro = robot.getDevice('gyro')
 sonar = robot.getDevice('sonar')
 
+logger = Logger()
 sensors = Sensors(gps, compass, gyro, sonar)
-controller = Controls(sensors, gps_path)
+controller = Controls(logger, sensors, gps_path)
 
 prop_r_motor = robot.getDevice('prop_r_motor')
 prop_r_motor.setPosition(float('+inf'))
@@ -168,14 +168,16 @@ def move_conveyor_cleats(time_ms):
 time = 0
 while robot.step(timestep) != -1:
     time += timestep
+    logger.update_time(timestep/1000)
     
     if time >= next_controller_step:
         next_controller_step += CONTROLLER_SAMPLING_PERIOD
         display_sonar_targets()
         sensors.step()
-        l_motor_speed, r_motor_speed = controller.top_level_control(timestep/1000)
+        l_motor_speed, r_motor_speed = controller.top_level_control((time-last_controller_time)/1000)
         prop_l_motor.setVelocity(l_motor_speed)
         prop_r_motor.setVelocity(r_motor_speed)
+        last_controller_time = time
 
     move_conveyor_cleats(time)
 

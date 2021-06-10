@@ -23,21 +23,18 @@ class SonarCone(pygame.sprite.Sprite):
         self.rect.center = self.pos
 
 class TrashOutline(pygame.sprite.Sprite):
-    def __init__(self, screen_rect, pos, radius):
+    def __init__(self, pos, radius):
         super().__init__()
         self.image = pygame.Surface(((radius+4)*2, (radius+4)*2), pygame.SRCALPHA)
         pygame.draw.circle(self.image, 'purple', (radius+4, radius+4), radius+4, width=1)
         self.rect = self.image.get_rect(center=pos)
         self.vel = pygame.Vector2(0, 0)
         self.pos = pygame.Vector2(self.rect.center)
-        self.screen_rect = screen_rect
 
     def update(self):
         self.pos += self.vel
         self.rect.center = self.pos
 
-        if not self.screen_rect.contains(self.rect):
-            self.kill()
 ################################### Trash ######################################
 SCREEN_WIDTH = 1000
 SCREEN_HEIGHT = 1000
@@ -46,44 +43,44 @@ TRASH_SIZES = [(0, 0), (0, 0), (1, 5), (5, 10)]
 TRASH_MASS = [(0.00, 0.23), (0.00, 0.36), (0.02, 1.55), (0.35, 4.28)]
 TRASH_WEIGHTS = [8, 13, 26, 53]
 
-class Trash(pygame.sprite.Sprite):
-  def __init__(self):
-    super(Trash, self).__init__()
+# class Trash(pygame.sprite.Sprite):
+#   def __init__(self):
+#     super(Trash, self).__init__()
 
-    # choose trash type
-    trash_choice = random.choices(list(range(0, 4, 1)), TRASH_WEIGHTS)
-    tr_c = trash_choice[0]
-    x = random.randint(0, SCREEN_WIDTH)
-    y = random.randint(0, 10)
-    if tr_c == 2:
-      r = random.uniform(TRASH_SIZES[tr_c][0], TRASH_SIZES[tr_c][1])/2.0
-      self.surf = pygame.Surface((r*2.0, r*2.0))
-      self.surf.fill((255, 128, 0))
-      pygame.draw.circle(self.surf, (255, 128, 0), (r,r), r)
-    elif tr_c == 3:
-      r = random.uniform(TRASH_SIZES[tr_c][0], TRASH_SIZES[tr_c][1])/2.0
-      self.surf = pygame.Surface((r*2.0, r*2.0))
-      self.surf.fill((255, 0, 0))
-      pygame.draw.circle(self.surf, (255, 0, 0), (r,r), r)
-    else:
-      self.surf = pygame.Surface((1, 1))
-      self.surf.fill((0, 128, 255))
+#     # choose trash type
+#     trash_choice = random.choices(list(range(0, 4, 1)), TRASH_WEIGHTS)
+#     tr_c = trash_choice[0]
+#     x = random.randint(0, SCREEN_WIDTH)
+#     y = random.randint(0, 10)
+#     if tr_c == 2:
+#       r = random.uniform(TRASH_SIZES[tr_c][0], TRASH_SIZES[tr_c][1])/2.0
+#       self.surf = pygame.Surface((r*2.0, r*2.0))
+#       self.surf.fill((255, 128, 0))
+#       pygame.draw.circle(self.surf, (255, 128, 0), (r,r), r)
+#     elif tr_c == 3:
+#       r = random.uniform(TRASH_SIZES[tr_c][0], TRASH_SIZES[tr_c][1])/2.0
+#       self.surf = pygame.Surface((r*2.0, r*2.0))
+#       self.surf.fill((255, 0, 0))
+#       pygame.draw.circle(self.surf, (255, 0, 0), (r,r), r)
+#     else:
+#       self.surf = pygame.Surface((1, 1))
+#       self.surf.fill((0, 128, 255))
       
-    self.rect = self.surf.get_rect(
-      center = (random.randint(0, SCREEN_WIDTH),
-          random.randint(0, 10)))
-    #self.pos = Vector2(self.rect.center)
-    self.speed = 3
-    self.mass = random.uniform(TRASH_MASS[tr_c][0], TRASH_MASS[tr_c][1])
+#     self.rect = self.surf.get_rect(
+#       center = (random.randint(0, SCREEN_WIDTH),
+#           random.randint(0, 10)))
+#     #self.pos = Vector2(self.rect.center)
+#     self.speed = 3
+#     self.mass = random.uniform(TRASH_MASS[tr_c][0], TRASH_MASS[tr_c][1])
 
-  def update(self):
-    # self.pos += (-self.speed/3, self.speed)
-    # self.rect.center = self.pos
-    self.rect.move_ip(-self.speed/3, +self.speed)
-    if self.rect.bottom >= SCREEN_HEIGHT:
-      self.kill()
-    if self.rect.left < 0:
-      self.kill()
+#   def update(self):
+#     # self.pos += (-self.speed/3, self.speed)
+#     # self.rect.center = self.pos
+#     self.rect.move_ip(-self.speed/3, +self.speed)
+#     if self.rect.bottom >= SCREEN_HEIGHT:
+#       self.kill()
+#     if self.rect.left < 0:
+#       self.kill()
 
 
 ############################### Trash Sensor ###################################
@@ -95,8 +92,8 @@ TRASH_SENSOR_HORIZONTAL_RESOLUTION = 0.18 # degrees TODO: This is based on beam 
 BACKSCATTERING_CROSS_SECTION_SCALING = 0.5 # The backscattering cross-section of a piece of trash relative to a sphere with the same diameter.
 
 # Assume miniumum detectable object size is related to the square of the detection distance, due to the inverse square law.
-TRASH_SENSOR_MIN_OBJECT_SIZE_OVER_DISTANCE_4 = 1 / 60**4 # Tyler Whitaker from Teledyne Marine estimates (based on experience) that the sonar can detect a 1m x 1m objects at 60m range.
-TRASH_SENSOR_MIN_OBJECT_SIZE_OVER_DISTANCE_4 /= BACKSCATTERING_CROSS_SECTION_SCALING # Scale assuming the above statement is for a 1m diameter sphere. This scaling represents how much sound a piece of trash may reflect relative to the same size (equal diameter) sphere.
+TRASH_SENSOR_MIN_OBJECT_SIZE_2_OVER_DISTANCE_4 = 1**2 / 60**4 # Tyler Whitaker from Teledyne Marine estimates (based on experience) that the sonar can detect a 1m x 1m objects at 60m range.
+TRASH_SENSOR_MIN_OBJECT_SIZE_2_OVER_DISTANCE_4 /= BACKSCATTERING_CROSS_SECTION_SCALING # Scale assuming the above statement is for a 1m diameter sphere. This scaling represents how much sound a piece of trash may reflect relative to the same size (equal diameter) sphere.
 
 class Trash_Sensor:
   """
@@ -123,10 +120,10 @@ class Trash_Sensor:
     y /= self.enviro.pixels_per_meter
     pygame_heading = heading
     heading = -heading + math.pi/2
-    sonar_dist_from_center = 2.2 # m
-    x += sonar_dist_from_center*math.cos(heading)
-    y += sonar_dist_from_center*math.sin(heading)
-
+    sonar_pos = (5.09, 2.28) # m
+    x += sonar_pos[0]*math.cos(heading) - sonar_pos[1]*math.sin(heading)
+    y += sonar_pos[0]*math.sin(heading) + sonar_pos[1]*math.cos(heading)
+    
     self.sonar_cone_sprite.update((x*self.enviro.pixels_per_meter,y*self.enviro.pixels_per_meter), pygame_heading)
 
     self.detected_pieces = []
@@ -138,7 +135,7 @@ class Trash_Sensor:
         # todo distance from boat -> can detect this size and in range? -> angle w/ heading -> within FOV?
         distance = math.sqrt((piece.x-x)**2 + (piece.y-y)**2)
         if distance <= TRASH_SENSOR_RANGE:
-            min_detectable_size = TRASH_SENSOR_MIN_OBJECT_SIZE_OVER_DISTANCE_4 * distance**4
+            min_detectable_size = math.sqrt(TRASH_SENSOR_MIN_OBJECT_SIZE_2_OVER_DISTANCE_4 * distance**4)
             if piece.size >= min_detectable_size:
                 angle = math.atan2(piece.y-y, piece.x-x) - heading
                 while angle > math.pi:
@@ -151,7 +148,7 @@ class Trash_Sensor:
                     if i not in self.detected_trash_sprite_lookup:
                         pixel_pos = np.array((piece.x, piece.y)) * self.enviro.pixels_per_meter
                         pixel_radius = piece.size/2 * self.enviro.pixels_per_meter
-                        sprite = TrashOutline(self.enviro.screen_rect, pixel_pos, pixel_radius)
+                        sprite = TrashOutline(pixel_pos, pixel_radius)
                         self.detected_trash_sprites.add(sprite)
                         self.detected_trash_sprite_lookup[i] = sprite
                     else:
