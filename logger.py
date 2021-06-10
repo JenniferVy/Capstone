@@ -1,15 +1,9 @@
-import matplotlib
 import pickle
 
 LOG_INTERVAL = 0.5 # seconds
 
 class Logger:
     def __init__(self, use_qt=False):
-        global plt
-        if use_qt:
-            matplotlib.use('Qt5Agg')
-        from matplotlib import pyplot as plt
-
         self.time = 0
         self.x_pos_log = {
             "t": [],
