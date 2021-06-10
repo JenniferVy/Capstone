@@ -21,15 +21,14 @@ from pygame.locals import (
     QUIT,
 )
 
-display_graphics = False 
+display_graphics = True 
 
-gps_path = []
-for i in range(30):
-    gps_path.append((100, 100 + (i+1)*1000)) # 200 km straight line with 1 km spaced waypoints
-print(gps_path)
+gps_path = [
+    (100, 300)
+]
 
 WORLD_WIDTH = 200 # meters
-WORLD_HEIGHT = 30200
+WORLD_HEIGHT = 400
 
 pygame.init()
 myfont = pygame.font.SysFont("monospace", 16)
